@@ -22,8 +22,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 
 - `agent-browser` 已装；`pnpm install` 完成；mise/Node ≥22。
 - **golden profile**（repo 外）：老用户 + 可用 embedding provider/key + zh-CN locale，作 light/medium 默认起点。
-- **secrets**：`~/.cherry-e2e/secrets.local.json`（repo 外）→ YAML `${secrets.*}` 插值。
-- **fixtures**：命名 → repo 外真实磁盘路径或命名字符串（见 README §4），harness 配置映射。
+- **secrets / fixtures**：`~/.cherry-e2e/secrets.local.json`（repo 外，脱敏模板见 repo 内 `tests/e2e-agent/secrets.example.json`）。**取值规则**：`${secrets.<key>}` → `providers[activeProvider].<key>`（如 `${secrets.embeddingModelId}` 取当前 `activeProvider` 档案的 embedding id）；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值 `null`/缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`）。**切 provider 只改 `activeProvider`**。
 - **prereqs**：`golden-profile` / `completed-base` / `notes-seeded` / `no-existing-group` … 由 harness 在每 case 前置满足（详见 README §4 + 域 spec）。
 
 ## 工作流

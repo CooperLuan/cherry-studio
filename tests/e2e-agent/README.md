@@ -95,9 +95,34 @@ steps:
 
 ## 4. 前置 / fixtures / secrets（repo 外引用）
 
-- **prereqs**：命名前置，由测试机 harness 满足。已用到：`golden-profile`(老用户+key,zh-CN)、`no-existing-kb`、`completed-base`、`no-existing-group`、`notes-seeded`(`feature.notes.path` 指 seed 目录+plain `.md`)、`notes-empty`、`two-embedding-models`、`rerank-model`(可选,skip-if-absent)。
-- **fixtures**：多为 **repo 外**真实磁盘路径——`sample-md` / `dupe-a` / `dupe-b` / `seed-note`（测试机 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`），YAML 用命名引用，路径在 harness 配置里映射。**亦可为命名字符串值**（非路径）：`recall-query`=`sample.md` 的已知字面子串（保召回 ≥1 命中）。
-- **secrets**：`~/.cherry-e2e/secrets.local.json`（repo 外），YAML 用 `${secrets.embeddingModelId}` 等插值。
+真值只存 **repo 外** `~/.cherry-e2e/secrets.local.json`；repo 内只放脱敏模板 [`secrets.example.json`](secrets.example.json)（**禁止 commit 真 key / 内部域名 / 绝对路径**）。配置一份、可切 provider、命名对齐 YAML 引用：
+
+```jsonc
+{
+  "activeProvider": "ollama",                  // 切 provider 只改这一行
+  "providers": {                               // provider 档案库（每个一套 key/baseUrl/模型 id）
+    "ollama": {
+      "apiKey": "", "baseUrl": "http://127.0.0.1:11434",
+      "embeddingModelId": "ollama::qwen3-embedding:0.6b",
+      "secondEmbeddingModelId": "ollama::bge-m3:latest",
+      "rerankModelId": null                    // null = 无 → 依赖它的步骤 skip-if-absent
+    }
+    /* 其余 provider 同形，见 secrets.example.json */
+  },
+  "fixtures": {                                // 命名 → 绝对路径 或 字符串值
+    "sample-md": "/abs/.../e2e/sample.md",
+    "dupe-a": "/abs/.../e2e/dupe/a/report.md",
+    "dupe-b": "/abs/.../e2e/dupe/b/report.md",
+    "recall-query": "<sample.md 的已知字面子串>",
+    "seed-note": "/abs/.../e2e/notes/e2e-seed-note.md"
+  }
+}
+```
+
+- **解析规则（runner / agent 必须照此取值）**：`${secrets.<key>}` → `providers[activeProvider].<key>`；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值为 `null` 或缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`→M4 rerank 子断言）。
+- **secrets key（per provider）**：`apiKey` / `baseUrl` / `embeddingModelId`(L1) / `secondEmbeddingModelId`(M3 文案切换) / `rerankModelId`(M4,可选)。`two-embedding-models` 前置 = 该 provider 同时有前两个 embedding id。
+- **fixtures**：`sample-md`(L2/L3) / `dupe-a`+`dupe-b`(M2,**同 basename 异目录**) / `recall-query`(M5,字符串=sample.md 字面子串) / `seed-note`(M1)。
+- **prereqs**（非 local.json，由 harness 置 app 态）：`golden-profile`(老用户+key,zh-CN)、`no-existing-kb`、`completed-base`、`no-existing-group`、`notes-seeded`(`feature.notes.path` 指 seed 目录 + plain `.md`)、`notes-empty`、`two-embedding-models`、`rerank-model`(可选)。
 
 ## 5. 触发与输出（对齐架构）
 
