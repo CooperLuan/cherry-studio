@@ -1,0 +1,35 @@
+# Spec: ../../light-medium.md §3 L3
+id: kb-l3-index-chunks
+title: 索引到 completed + 看分块
+tier: light
+domain: knowledge
+locale: zh-CN
+live: [embedding-key]
+prereqs: [golden-profile]
+fixtures: [sample-md]
+after: kb-l2-add-file          # 复用 L2 加入的文件 item
+
+steps:
+  - intent: 有界轮询 item 状态到 completed（locale 无关 data-*）
+    check: attr
+    by: { testid: kb-item-row }
+    attr: data-status
+    equals: completed
+    timeout: 120s
+
+  - intent: 露出行 More 菜单 → view_chunks
+    do: hover
+    by: { testid: kb-item-row }
+  - do: click
+    by: { role: button, aria-i18n: common.more }
+  - do: click
+    by: { role: menuitem, i18n: knowledge.data_source.actions.view_chunks }
+
+  - check: visible
+    by: { testid: kb-chunk-panel }
+  - check: visible
+    by: { testid: kb-chunks-count }
+  - intent: 至少 1 个分块卡（精确数不断言）
+    check: count
+    by: { testid: kb-chunk-card }
+    min: 1

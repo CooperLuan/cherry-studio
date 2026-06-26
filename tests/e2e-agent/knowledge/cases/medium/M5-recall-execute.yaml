@@ -1,0 +1,63 @@
+# Spec: ../../light-medium.md §4 M5 — 仅确定性信封 + 历史 CRUD + 结果卡交互
+# 红线：不断言召回排序/分数/命中内容/source name/chunk #N（→ full F8）
+id: kb-m5-recall-execute
+title: 执行召回（信封）+ 历史 CRUD + 结果卡 copy/expand
+tier: medium
+domain: knowledge
+locale: zh-CN
+live: [embedding-key]          # vector/hybrid 走 embedKnowledgeQuery；仅断言信封
+prereqs: [completed-base]
+fixtures: [recall-query]       # 命名字符串：sample.md 的已知字面子串（保 ≥1 命中）
+
+steps:
+  - intent: 开召回测试抽屉（DetailHeader FlaskConical）
+    do: click
+    by: { i18n: knowledge.tabs.recall_test }
+
+  # ── 搜索信封（不断言结果，只断言壳）──
+  - do: type
+    by: { placeholder-i18n: knowledge.recall.placeholder }
+    text: "${fixtures.recall-query}"
+  - do: click
+    by: { i18n: knowledge.recall.submit }
+  - intent: searching 态（spinner + submit 禁用）
+    check: disabled
+    by: { i18n: knowledge.recall.submit }
+  - intent: 摘要信封出现（计数文案在场即可，不断言取值）
+    check: visible
+    by: { i18n: knowledge.recall.result_count }
+    timeout: 60s
+
+  # ── 历史 CRUD（全确定性，本地态）──
+  - intent: focus 输入 → 历史面板展开（query 已入首位）
+    do: click
+    by: { placeholder-i18n: knowledge.recall.placeholder }
+  - check: visible
+    by: { has-attr: data-recall-history }
+  - check: visible
+    by: { i18n: knowledge.recall.history_title }
+  - intent: 点历史项回填输入（不自动搜）
+    do: click
+    by: { within: { has-attr: data-recall-history }, has-text: "${fixtures.recall-query}" }
+  - intent: 单项删除
+    do: click
+    by: { aria-i18n: knowledge.recall.history_remove }
+  - intent: 清空历史
+    do: click
+    by: { aria-i18n: knowledge.recall.history_clear }
+  - check: hidden
+    by: { i18n: knowledge.recall.history_title }
+
+  # ── 结果卡确定性子行为（只 gate 图标/clamp 切换，不 gate 颜色/内容）──
+  - intent: copy 图标 lucide-copy → lucide-check（成功态无 text-success，不 gate 颜色）
+    do: click
+    by: { aria-i18n: knowledge.recall.copy }
+  - check: visible
+    by: { within: { aria-i18n: knowledge.recall.copy }, has-attr: "data-lucide=check" }
+  - intent: 展开/收起 line-clamp 切换（fixture 含长段落）
+    do: click
+    by: { aria-i18n: knowledge.recall.expand }
+    skip-if-absent: result-card-expandable
+  - check: visible
+    by: { aria-i18n: knowledge.recall.collapse }
+    skip-if-absent: result-card-expandable

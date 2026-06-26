@@ -1,0 +1,48 @@
+# Spec: ../../light-medium.md §4 M1
+# Empty-state variant: same case run with prereq `notes-empty` (harness swaps), asserting
+# knowledge.data_source.add_dialog.note.empty_title instead of the seeded list.
+id: kb-m1-url-note-sources
+title: URL + Note 源（add-time）
+tier: medium
+domain: knowledge
+locale: zh-CN
+live: [network]                # URL 索引联网；仅 add-time 断言，不等抓取
+prereqs: [completed-base, notes-seeded]
+after: kb-l4-recall-panel
+
+steps:
+  # ── URL 源（add-time only）──
+  - do: click
+    by: { i18n: knowledge.data_source.toolbar.add }
+  - do: click
+    by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.url }
+  - check: disabled
+    by: { i18n: common.add }
+  - do: type
+    by: { id: knowledge-source-url-input }
+    text: "https://example.com"
+  - check: enabled
+    by: { i18n: common.add }
+  - do: click
+    by: { i18n: common.add }
+  - intent: URL 行出现（类型列「URL/链接」）
+    check: visible
+    by: { i18n: knowledge.data_source.filters.url }
+
+  # ── Note 源（seeded）──
+  - do: click
+    by: { i18n: knowledge.data_source.toolbar.add }
+  - do: click
+    by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.note }
+  - check: visible
+    by: { testid: knowledge-source-note-list }
+  - intent: 按名勾选 seed 笔记
+    do: click
+    by: { within: { testid: knowledge-source-note-list }, role: listitem, has-text: "e2e-seed-note" }
+  - check: enabled
+    by: { i18n: common.add }
+  - do: click
+    by: { i18n: common.add }
+  - intent: 笔记行出现（类型列「笔记」）
+    check: visible
+    by: { i18n: knowledge.data_source.filters.note }

@@ -1,0 +1,61 @@
+# Spec: ../../light-medium.md §4 M3 — fully deterministic (local form state + 1 local DB write)
+id: kb-m3-rag-chunking
+title: RAG 分块校验 + dirty/save 门控
+tier: medium
+domain: knowledge
+locale: zh-CN
+live: []
+prereqs: [completed-base, two-embedding-models]
+
+steps:
+  - intent: 打开 RAG 配置抽屉（DetailHeader SlidersHorizontal）
+    do: click
+    by: { aria-i18n: knowledge.tabs.rag_config }
+
+  - intent: overlap >= size → 错误 + Save 禁用
+    do: type
+    by: { field-i18n: knowledge.rag.chunk_size }
+    text: "256"
+  - do: type
+    by: { field-i18n: knowledge.rag.chunk_overlap }
+    text: "256"
+  - check: visible
+    by: { i18n: knowledge.rag.chunk_overlap_must_be_smaller }
+  - check: disabled
+    by: { i18n: knowledge.rag.save_action }
+
+  - intent: overlap < size → 错误消失 + Save 启用
+    do: type
+    by: { field-i18n: knowledge.rag.chunk_overlap }
+    text: "64"
+  - check: hidden
+    by: { i18n: knowledge.rag.chunk_overlap_must_be_smaller }
+  - check: enabled
+    by: { i18n: knowledge.rag.save_action }
+
+  - intent: 空 chunk_size → Save 禁用
+    do: type
+    by: { field-i18n: knowledge.rag.chunk_size }
+    text: ""
+  - check: disabled
+    by: { i18n: knowledge.rag.save_action }
+
+  - intent: 恢复有效值 → 保存 → toast → Save 回禁用
+    do: type
+    by: { field-i18n: knowledge.rag.chunk_size }
+    text: "512"
+  - do: click
+    by: { i18n: knowledge.rag.save_action }
+  - check: visible
+    by: { i18n: knowledge.rag.saved }
+  - check: disabled
+    by: { i18n: knowledge.rag.save_action }
+
+  - intent: 改 embedding 模型 → 主按钮文案 save_action → restore.submit（只断言文案，不点）
+    do: pick-model
+    by: { aria-i18n: knowledge.rag.embedding_model }
+    model: "${secrets.secondEmbeddingModelId}"
+  - check: visible
+    by: { i18n: knowledge.restore.submit }
+  - check: hidden
+    by: { i18n: knowledge.rag.save_action }

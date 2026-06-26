@@ -20,10 +20,11 @@ steps:
     by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.file }
 
   # ── OS 级逃生口：agent-browser 驱动不了原生框 → osascript ──
-  - do: shell
+  # pick-file 内部：Cmd+Shift+G → 输绝对路径 → Enter（避按列表点选的 locale/焦点脆性）
+  - intent: 用 osascript 在原生「打开」框喂入 fixture 绝对路径
+    do: shell
     osascript: pick-file
     path: "${fixtures.sample-md}"
-    note: "Cmd+Shift+G → 绝对路径 → Enter（避按列表点选的 locale/焦点脆性）"
 
   # ── 纯 DOM gate：行出现（picker 交互非 gating，只看结果）──
   - check: count

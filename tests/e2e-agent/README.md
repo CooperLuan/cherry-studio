@@ -30,6 +30,7 @@ locale: zh-CN                  # 文本断言按此 locale 解析 i18n key
 live: [embedding-key]          # [] | embedding-key | network —— 标注碰真实后端的步骤
 prereqs: [golden-profile, no-existing-kb]   # 命名前置（见 §4）
 fixtures: [sample-md]          # 命名 fixture（见 §4）
+after: kb-l1-create-kb         # 可选：继承该 case 跑完后的 App 状态（同一 run 内顺序链，如 L1→L2→L3）
 
 steps:
   - do: <verb>  ...            # 动作
@@ -44,9 +45,14 @@ steps:
 | `{ attr: { data-status: completed }, testid: kb-item-row }` | 属性匹配 | 最稳 |
 | `{ id: knowledge-create-name }` | `#id` | 稳 |
 | `{ aria: Add }` / `{ aria-i18n: knowledge.embedding_model }` | aria-label（字面 / i18n 解析） | 稳 |
+| `{ placeholder-i18n: knowledge.recall.placeholder }` | 按 `placeholder` 属性（i18n 解析）定位输入框 | 稳（输入框无 id 时） |
 | `{ role: menuitem, i18n: knowledge.context.rename }` | role + 文本 | 中 |
 | `{ i18n: knowledge.empty }` | 按 i18n key 解析成 `locale` 文本再匹配 | locale 依赖（**优先 testid**） |
 | `{ submit: dialog }` | 当前对话框的 `button[type=submit]` | 稳 |
+| `{ field-i18n: knowledge.rag.chunk_size }` | label(i18n) 关联的表单控件（input/slider/select） | 稳 |
+| `{ within: { testid: … }, role: listitem, has-text: "name" }` | 容器内按 role + 文本定位（`within:` 可裹任意选择器，含 `has-attr`） | 中 |
+| `{ has-attr: data-recall-history }` / `{ has-attr: "data-lucide=check" }` | 含该属性 `[attr]`，或属性等值 `[attr=value]` | 稳 |
+| `{ class: bg-secondary }` / `{ role: heading, has-text: "name" }` | Tailwind 原子类模糊匹配 / 角色 + 文本（无 testid 时退路） | 弱（**优先 testid**） |
 
 > **locale 规则**：作者写 **i18n key**，runner 按 case 的 `locale` 解析成实际文本。关键状态/列表/分块断言走 `testid`+`attr`（locale 无关）。
 
@@ -56,7 +62,8 @@ steps:
 |---|---|---|
 | `goto` | `nav: knowledge` | 点侧边栏导航（非 URL） |
 | `click` | `by:` | 点击 |
-| `type` | `by:`, `text:` | 输入（`text` 可含 `${...}` 插值） |
+| `type` | `by:`, `text:` | **替换**字段内容（非追加；`text: ""` 清空）；可含 `${...}` 插值 |
+| `select` | `by:`, `option:` | 下拉选项（按内部值，如 searchMode `vector`/`hybrid`/`bm25`） |
 | `pick-model` | `by:`, `model:` | KnowledgeModelSelect 选模型（`${secrets.embeddingModelId}`） |
 | `hover` | `by:` | 悬停（露出 hover-only 控件） |
 | `press` | `keys: Escape` | 键盘 |
@@ -76,6 +83,8 @@ steps:
 
 **红线**：`check:` 只能是确定性事实。**禁止**断言召回排序/分数/命中内容/生成文本（→ full 非 gating 观测）。碰 `live` 的只断终态/信封。
 
+**步级可选**：`intent:`（语义说明，自愈时给 LLM）、`skip-if-absent: <ref>`（引用的 secret / prereq / 命名条件不存在或不满足则跳过该步——如 rerank 模型 `secrets.rerankModelId`、可选 testid `kb-base-row`、内容相关条件 `result-card-expandable`）。
+
 ## 3. 生命周期：compile → replay → self-heal（B 模式）
 
 1. **首跑（compile）**：runner 按 `steps` 驱动 agent-browser；逐步把 `by:` 解析成**实际定位结果 + 截图**写入 `.compiled/<id>.json`；`check:` 记录通过基线。
@@ -86,8 +95,8 @@ steps:
 
 ## 4. 前置 / fixtures / secrets（repo 外引用）
 
-- **prereqs**：命名前置，由测试机 harness 满足。已用到：`golden-profile`(老用户+key,zh-CN)、`no-existing-kb`、`completed-base`、`notes-seeded`(`feature.notes.path` 指 seed 目录+plain `.md`)、`notes-empty`、`two-embedding-models`、`rerank-model`(可选,skip-if-absent)。
-- **fixtures**：`sample-md` / `dupe-a` / `dupe-b` / `seed-note` —— **repo 外**真实磁盘路径（测试机 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`），YAML 用命名引用，路径在 harness 配置里映射。
+- **prereqs**：命名前置，由测试机 harness 满足。已用到：`golden-profile`(老用户+key,zh-CN)、`no-existing-kb`、`completed-base`、`no-existing-group`、`notes-seeded`(`feature.notes.path` 指 seed 目录+plain `.md`)、`notes-empty`、`two-embedding-models`、`rerank-model`(可选,skip-if-absent)。
+- **fixtures**：多为 **repo 外**真实磁盘路径——`sample-md` / `dupe-a` / `dupe-b` / `seed-note`（测试机 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`），YAML 用命名引用，路径在 harness 配置里映射。**亦可为命名字符串值**（非路径）：`recall-query`=`sample.md` 的已知字面子串（保召回 ≥1 命中）。
 - **secrets**：`~/.cherry-e2e/secrets.local.json`（repo 外），YAML 用 `${secrets.embeddingModelId}` 等插值。
 
 ## 5. 触发与输出（对齐架构）
@@ -100,4 +109,4 @@ steps:
 - **`e2e-run` skill 实现**：需对齐 **agent-browser 实际命令面**（§2.2/2.3 verb → agent-browser 原语），在测试机侧落地。
 - **自愈范围**：仅重解析定位 vs 重排步骤——倾向**仅定位**（步骤改动交人）。
 - **`.compiled` 截图基线**用途：仅诊断附件，还是参与视觉回归（v1 不做视觉 gate）。
-- 现状：**11 个 light/medium case 已 live 验证、待按本 schema 编码**；本目录先放 L1/L2 两个 tracer。
+- 现状：**11 个 light/medium case 已 live 验证并按本 schema 编码完毕**（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。`.compiled/` 待测试机首跑 compile 后回填。
