@@ -124,8 +124,8 @@
 
 ## 4. Medium 层（累积含 Light，全确定性 gate）
 
-> ✅ **Medium live 验证（2026-06-26，测试机 / agent-browser / zh-CN）**：**M3 ✅ · M4 ✅ · M5 ✅ · M7 ✅**；**M1 PARTIAL**（URL add-time PASS；Note 因 profile 无笔记仅空态可测）；**M2 已纠正**（冲突对话框确实存在，见下）。截图 `…/kb-medium-001/`。
-> 漂移：M2 有冲突对话框（旧 spec 误判）、M5 copy 成功态无 `text-success`、M1 Note 需 seeding —— 均已并入。
+> ✅ **Medium live 验证（2026-06-26，测试机 / agent-browser / zh-CN）—— 全部 PASS**：M1（URL add-time + Note seeded 全路径 + 空态）· M2（冲突对话框三选项）· M3 · M4 · M5 · M7。M6 暂缓。截图 `…/kb-medium-001/` + 复跑。
+> 已并入的 live 修正：M2 冲突对话框存在（旧 spec 误判）、keep 按钮文案 `keep_all`=「全部保留」、M5 copy 成功态无 `text-success`、M1 Note seeding=`feature.notes.path` 下 plain `.md`。
 
 ### M1 — URL + Note 源
 - **URL**：`input#knowledge-source-url-input`（placeholder `...url.placeholder`）→ footer `common.add` 空禁用/非空启用 → 提交 → 行出现带 `Link2` 图标（`text-cyan-500`）、类型列 `knowledge.data_source.filters.url`。**断言 add-time only**（索引会联网抓取，不等完成；live 见过抓取 HTTP 451，不影响 add-time gate）。确定性：add 步 yes，行图标 partial。
@@ -133,7 +133,7 @@
 - **Note seeding（Q-note-seed 已解）**：笔记 = `notesPath`（pref `feature.notes.path`，**默认空字符串** → 不设则永远空态）目录下的 `.md`；`projectNotesTree` 纯遍历目录、**无需 frontmatter/索引**。golden profile 做法：① 设 `feature.notes.path` 指向 seed 目录（Notes 设置里选文件夹，或预置该 pref；默认数据目录 `<userData>/Data/Notes`）② 丢 ≥1 plain `.md`（如 `e2e-seed-note.md`，名字即列表显示名）。`useDirectoryTree` 实时读，丢完重开对话框即现；空态变体 = 指向空目录。
 - **live 依赖**：URL=network（仅 add-time 断言规避）；Note=none（seeded）
 
-### M2 — 同名冲突对话框（保留全部 / 替换 / 取消）
+### M2 — 同名冲突对话框（全部保留 / 替换 / 取消）
 - ✅ **live 复核（2026-06-26）：冲突对话框确实存在**——旧 spec「无 modal、按路径去重」**误判已纠正**（PR #16188/#16189 已合并，组件 `addKnowledgeItemDialog/KnowledgeAddConflictDialog.tsx`，见记忆 [[knowledge-add-conflict-dialog]]）。
 - **触发**：已有 item 后，再经 picker 加入**同名**源（同 basename / 同 relativePath）→ 弹对话框（同路径重复、同名不同目录**均触发**，**按名判定非路径**）。
 - **断言（确定性 DOM，zh-CN）**：
@@ -141,13 +141,13 @@
   |---|---|
   | 对话框出现 | title `knowledge.data_source.add_dialog.conflict_dialog.title`（「存在同名数据源」） |
   | 列出冲突项 | `<ul><li>` text=冲突项标题 + 类型图标 |
-  | 三操作按钮 | `...conflict_dialog.keep_all`（「保留全部」emphasis）/ `...replace`（「替换」destructive）/ `common.cancel`（「取消」outline） |
-  | 「保留全部」→ 两行共存 | 点 keep_all（resolution=`rename`，新项自动 `_N` 改名）→ `[data-testid=kb-item-row]` 计为 2 |
+  | 三操作按钮 | `...conflict_dialog.keep_all`（「全部保留」emphasis）/ `...replace`（「替换」destructive）/ `common.cancel`（「取消」outline） |
+  | 「全部保留」→ 两行共存 | 点 keep_all（resolution=`rename`，新项自动 `_N` 改名）→ `[data-testid=kb-item-row]` 计为 2 |
   | 「替换」→ 仍 1 行 | 点 replace（覆盖原项）→ 1 行 |
   | 「取消」→ 无变化 | 点 cancel / Esc → 对话框关、行数不变 |
 - **确定性**：对话框 + 三按钮 + 解析后行数 = yes（add-time，不断言重嵌入）。
 - **fixtures**：`dupe/a/report.md` + `dupe/b/report.md`（同 basename）；或同一文件重复加。
-- **注**：`ConflictResolution = 'rename' | 'replace'`（rename=保留全部共存，replace=覆盖）；对话框无 testid → 按 zh-CN 文本定位（如需可后续补 testid）。
+- **注**：`ConflictResolution = 'rename' | 'replace'`（rename=全部保留共存，replace=覆盖）；对话框无 testid → 按 zh-CN 文本定位（如需可后续补 testid）。
 
 ### M3 — RAG 配置：分块校验 + dirty/save 门控 + 持久化 ✅全确定性
 - **触发**：active 库（status≠failed）的 RAG 抽屉（`DetailHeader` `SlidersHorizontal` 按钮 → `RagConfigPanel` 的 `ActiveRagConfigPanel` 分支）
