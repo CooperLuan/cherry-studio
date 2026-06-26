@@ -17,13 +17,11 @@ steps:
     equals: completed
     timeout: 120s
 
-  - intent: 露出行 More 菜单 → view_chunks
-    do: hover
-    by: { testid: kb-item-row }
-  - do: click
-    by: { role: button, aria-i18n: common.more }
-  - do: click
-    by: { role: menuitem, i18n: knowledge.data_source.actions.view_chunks }
+  # 上游 #16442 删了 per-row More 按钮，行操作改为整行右键原生菜单（agent-browser 驱不动）；
+  # 但 completed 行本身可点（onClick=open chunks，aria-label=…table.view_chunks_row）→ 直接点行。
+  - intent: 点击 completed 行直接打开 chunks 抽屉
+    do: click
+    by: { attr: { data-status: completed }, testid: kb-item-row }
 
   - check: visible
     by: { testid: kb-chunk-panel }

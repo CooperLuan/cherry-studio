@@ -95,12 +95,13 @@
 
 ### L3 — 索引到 completed + 看分块
 - **触发**：L2 的行可见、带状态 Badge
-- **步骤**：有界轮询状态到 ready → 行 `More` 菜单 → `view_chunks` → 抽屉渲染
+- **步骤**：有界轮询状态到 ready → **直接点击 completed 行** → 抽屉渲染
+- ⚠️ **上游 #16442 行操作重构（2026-06-26 merge upstream/main 时并入）**：`KnowledgeItemRow` 删掉了 per-row `More` 按钮，行操作（preview/view_chunks/reindex/delete）改走**整行右键原生菜单**（`CommandContextMenu location="webcontents.context"`，agent-browser 驱不动，同 file picker）。但 **completed 行本身可点**（`onClick`/`onViewChunks` 在 `DataSourcePanel` 都接到同一 `handleItemClick`=打开 chunks，行 `aria-label=knowledge.data_source.table.view_chunks_row`）→ **L3 改为直接点 `[data-testid=kb-item-row][data-status=completed]` 行**，纯 DOM、locale 无关。**原 hover→More→view_chunks menuitem 路径作废。**
 - **断言**：
   | 断言 | 锚点 | 确定性 |
   |---|---|---|
   | 状态到 completed | **[T2✅]** 轮询 `[data-item-id='<id>'][data-status='completed']`（行属性，locale 无关）；有界 until-loop | partial（终态确定，向量值不断言） |
-  | view_chunks 菜单项可点 | **[live 复核]** upstream/main 上 MenuItem **已带 `role=menuitem`** → 可按角色或文本（zh-CN「查看 Chunks」）定位（仅 status=completed 渲染；**U1 作废**） | yes |
+  | 点 completed 行打开 chunks | **[T2✅]** 点 `[data-testid=kb-item-row][data-status=completed]`（行可点=view chunks，#16442 后无 More 按钮）；非 completed 行无 `onClick` | yes |
   | 分块面板渲染 | **[T3✅]** `[data-testid=kb-chunk-panel]` | yes |
   | chunks 计数 | **[T3✅]** `[data-testid=kb-chunks-count]`（text `knowledge.data_source.chunks_count`） | partial |
   | ≥1 分块卡 | **[T3✅]** `[data-testid=kb-chunk-card]`（≥1）；空态 EmptyState 不出现 | partial（≥1 确定，精确数不断言） |
