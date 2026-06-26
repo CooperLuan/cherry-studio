@@ -1,0 +1,53 @@
+# Tracer case — proves the schema for: sidebar nav, dialog, offline validation,
+# model pick (live), and a locale-free terminal-status assertion.
+# Spec: ../../light-medium.md §3 L1
+id: kb-l1-create-kb
+title: 创建知识库（含离线校验 + 索引完成）
+tier: light
+domain: knowledge
+locale: zh-CN
+live: [embedding-key]
+prereqs: [golden-profile, no-existing-kb]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: knowledge
+  - check: visible
+    by: { i18n: knowledge.empty }
+
+  - intent: 打开建库对话框
+    do: click
+    by: { aria: Add }
+  - do: click
+    by: { role: menuitem, i18n: knowledge.add.title }
+  - check: visible
+    by: { id: knowledge-create-name }
+
+  # ── 离线校验（network 前短路，纯确定性）──
+  - intent: 空提交触发两个校验错误
+    do: click
+    by: { submit: dialog }
+  - check: visible
+    by: { i18n: knowledge.name_required }
+  - check: visible
+    by: { i18n: knowledge.embedding_model_required }
+
+  # ── 成功建库（live: fetchDimensions 在校验通过后才调）──
+  - do: type
+    by: { id: knowledge-create-name }
+    text: "E2E Light KB"
+  - do: pick-model
+    by: { aria-i18n: knowledge.embedding_model }   # 标签随 locale，勿用英文字面
+    model: "${secrets.embeddingModelId}"
+  - do: click
+    by: { submit: dialog }
+
+  # ── 结果：库行选中 + 状态终态（locale 无关 data-*，有界等待）──
+  - check: visible
+    by: { class: bg-secondary }                    # 选中的 KnowledgeBaseRow
+  - check: attr
+    by: { testid: kb-base-status }
+    attr: data-status
+    equals: completed
+    timeout: 60s

@@ -1,0 +1,31 @@
+# Tracer case — proves the schema for: native OS picker via the `shell`/osascript
+# escape hatch (agent-browser can't drive native dialogs), plus a count assertion.
+# Spec: ../../light-medium.md §3 L2（决策 B）
+id: kb-l2-add-file
+title: 加单个文件源（native picker via osascript）
+tier: light
+domain: knowledge
+locale: zh-CN
+live: []                       # add-time only; indexing asserted in L3
+prereqs: [golden-profile, completed-base]
+fixtures: [sample-md]
+
+steps:
+  - intent: 打开数据源菜单（toolbar Add）
+    do: click
+    by: { i18n: knowledge.data_source.toolbar.add }            # DataSourcePanelHeader → 源类型菜单
+
+  - intent: 选 file 源 → 立即弹原生 OS 文件框
+    do: click
+    by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.file }
+
+  # ── OS 级逃生口：agent-browser 驱动不了原生框 → osascript ──
+  - do: shell
+    osascript: pick-file
+    path: "${fixtures.sample-md}"
+    note: "Cmd+Shift+G → 绝对路径 → Enter（避按列表点选的 locale/焦点脆性）"
+
+  # ── 纯 DOM gate：行出现（picker 交互非 gating，只看结果）──
+  - check: count
+    by: { testid: kb-item-row }
+    min: 1
