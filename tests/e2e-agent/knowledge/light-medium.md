@@ -12,7 +12,7 @@
 
 - **层累积**：light ⊂ medium ⊂ full。跑 medium 必跑全部 light，跑 full 必跑全部 medium。
 - **light/medium 的 pass/fail gate 必须确定性**：只断言 DOM / 文本 / 状态，**禁止任何 LLM 判断、召回排序质量、生成文本**。带这些性质的观测一律降级到 full 非 gating，或排除。
-- **agent-browser 不能驱动 OS 原生选择器**：`directory` 源走 `window.api.file.selectFolder()` 原生目录框 → **排除出确定性层**。`file` 源走 react-dropzone 的隐藏 `<input type=file>`，用 `setInputFiles` 喂**真实磁盘 fixture 路径**（`window.api.file.getPathForFile` 才有值）→ 可驱动。
+- **agent-browser 不能驱动 OS 原生选择器（DOM 层）**：upstream/main 上 `file` 与 `directory` 源**均已重构为原生 OS picker**（`window.api.file.select()` / `selectFolder()` → 主进程 `showOpenDialog`；`FileSourceContent`/`DirectorySourceContent` 已删、DOM 内无 `<input type=file>`/dropzone）。**决策 B（2026-06-26）**：`file` 源仍作 L2/L3 主路，picker 这一步用 **osascript 驱动**（macOS-only harness 步骤，已实测可行），但 **gate 断言保持纯 DOM**（行 `data-*`）；`note`/`url` 源为**纯 DOM 可移植 fallback**。`directory` 源仍**排除出确定性层**。
 - **主流程 live key 不 mock**：碰 embedding provider 的步骤只断言**终态 / 信封**（如索引到 `completed`、召回摘要出现），不断言向量值 / 精确块数 / 排序。
 - **v2 无 in-app 子项树**：root 扁平列表，不测层级渲染。
 - **导航靠点侧边栏**（像真人），不靠 URL；HashRouter vs TanStack `/app/knowledge` 对 agent-browser 无关紧要。
@@ -43,20 +43,24 @@
 
 | # | 文件 | 加什么 | 解锁 | 不改的 workaround |
 |---|---|---|---|---|
-| U1 | `packages/ui` menu-item.tsx (~L84) | `role="menuitem"` | L3 view-chunks 菜单、M7 各菜单按语义角色定位 | 改用按钮**文本**定位菜单项（较脆、locale 依赖） |
+| ~~U1~~ | ~~`packages/ui` menu-item.tsx~~ | ~~`role="menuitem"`~~ | **作废**：upstream/main 上 MenuItem **已带 `role=menuitem`**（live 复核），无需改 | — |
 | U2 | `packages/ui` QuickPanel view.tsx | `data-testid="quick-panel-body/footer"`；行 `data-id` 用实体 id + `data-selected` 属性（现为数字 `data-id={itemIndex}`、无 selected 属性） | M6 KB 选择器按库 id 定位 + 断言选中态 | DOM 遍历 / Check 图标存在性 |
 
 ### 2C. 纯规格修正（无需改码）
 
 - M6 内容类型 i18n key 实际是 `chat.save.knowledge.content.maintext.title`，**不是** `...content.text.title`。
 
-> **决策点**：2A 是否现在就补？2B 走改码还是 workaround，还是 **M6 暂缓**只留 2A？见末尾「待你拍板」。
+> **决策（已定 2026-06-26）**：2A 已补（✅ light live 验证通过）；**U1 作废**（upstream MenuItem 已有 `role=menuitem`）；**U2 + M6 暂缓**。
 
 ---
 
 ## 3. Light 层（必须每次绿）
 
 > 核心冒烟：建库 → 加文件源 → 索引到 completed → 召回面板渲染 + 提交门控。
+>
+> ✅ **Light live 验证（2026-06-26，测试机 cherryai004 / agent-browser，golden profile = zh-CN）**：
+> **L1 ✅** · **L2 ✅**（native picker via osascript，决策 B）· **L3 ✅**（chunks=2）· **L4 ✅**。
+> 截图 `/tmp/cherry-migration-e2e/20260626/v2.x/knowledge/kb-light-001/`。各 case 的 locale/结构漂移已并入下方。
 
 ### L1 — 创建知识库
 - **触发**：点侧边栏进知识库 → navigator header `Add` 按钮（`aria-label='Add'`，`BaseNavigatorCreateMenu`）→ 菜单项 `knowledge.add.title`
@@ -68,25 +72,26 @@
   | 名称输入存在 | `input#knowledge-create-name`（CreateKnowledgeBaseDialog L189） | yes |
   | 空名报错 | `FieldError` text `knowledge.name_required`（L196，**网络前短路**，submit handler L143-145 早返回） | **yes（离线）** |
   | 无模型报错 | `FieldError` text `knowledge.embedding_model_required`（L237） | **yes（离线）** |
-  | 模型选择器 | `button[aria-label='Embedding Model']`（L229） | yes |
-  | 提交按钮文案 | `button[type=submit]` text `knowledge.add.submit`（Create） | yes |
+  | 模型选择器 | KnowledgeModelSelect 触发按钮；**aria-label/文本随 locale**（zh-CN「嵌入模型」）→ 用 zh-CN 文本或结构定位，**勿用英文 'Embedding Model'** | yes |
+  | 提交按钮文案 | `button[type=submit]` text `knowledge.add.submit`（zh-CN「创建」） | yes |
   | 建成后库行选中 | `KnowledgeBaseRow` `class*=bg-secondary`（KnowledgeBaseRow.tsx L72） | yes |
   | 库状态 Badge | **[T4✅]** `[data-testid=kb-base-status][data-status=completed]`（locale 无关） | partial（server 态） |
 - **live 依赖**：成功建库走 embedding-key（`fetchDimensions` 在校验通过后 L150 才调）。**校验子断言全离线确定性**。
-- **fixtures**：golden profile（含 1 个可用 embedding provider + key）；测试库内无已存在 KB。
+- **fixtures**：golden profile（含 1 个可用 embedding provider + key，测试机用 `cherryInExpress::qwen/qwen3-embedding-0.6b`）；测试库内无已存在 KB。
+- **live 复核（PASS）**：空提交**同时**显示 `name_required` + `embedding_model_required`（非逐个出现）；golden profile 跑 **zh-CN**。
 
-### L2 — 加单个文件源
-- **触发**：`DataSourcePanel` 空态 / `DataSourcePanelHeader` 的 Add 按钮 → File tab（默认）
-- **步骤**：`setInputFiles` 注入 `fixtures/knowledge/sample.md` → 文件入列 → 点 Add
-- **断言**：
+### L2 — 加单个文件源（native picker，决策 B）
+- **触发**：`DataSourcePanel` 空态 / `DataSourcePanelHeader` 的 Add 按钮 → 选 `file` 源 → **立即弹原生 OS 文件框**（`window.api.file.select({properties:['openFile','multiSelections']})`，AddKnowledgeItemDialog L192）。upstream/main 上**无 in-dialog 文件选中列表/dropzone**，picker 直接返回路径。
+- **驱动（macOS harness 步骤，非 DOM gate）**：`osascript` 驱动「打开」对话框 → `Cmd+Shift+G` 输入 fixture **绝对路径**（避开按列表点选的 locale/焦点脆性）→ 回车确认。
+- **断言（纯 DOM gate）**：
   | 断言 | 锚点 | 确定性 |
   |---|---|---|
-  | 文件入选中列表 1 项 | `[data-testid='knowledge-source-file-list'] [role=listitem]`（已存在 testid） | yes |
-  | Add 按钮启用 | footer `common.add`（`canSubmit` = selectedFiles>0） | yes |
-  | 列表出现 1 行 | **[T2✅]** `[data-testid=kb-item-row]`（grid `div[role=row]`，按 `[data-item-id]` 定位具体行） | yes |
-- **live 依赖**：none（加入队列为本地操作；索引在 L3 单独断言）
-- **fixtures**：`fixtures/knowledge/sample.md`（小、含已知段落、一段是固定召回 query 的字面子串）
-- **注**：`file` 源是唯一无需原生框、可确定性驱动的源（dropzone 隐藏 input + 真实路径）。
+  | 列表出现该文件行 | **[T2✅]** `[data-testid=kb-item-row]`（grid `div[role=row]`，按 `[data-item-id]` 定位具体行） | yes |
+  | 行标题=文件名 | 该行标题单元格 text=fixture 文件名 | yes |
+- **live 依赖**：none（加入队列为本地操作；索引在 L3 断言）。**picker 交互是 OS 级、非 gating DOM；gate 只看行出现。**
+- **fixtures**：`sample.md`（**repo 外真实磁盘路径**；测试机现置于 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`）
+- **可移植 fallback（无 osascript / 非 macOS）**：改用 `url` 源（`input#knowledge-source-url-input` 纯文本，但索引联网）或 `note` 源（`knowledge-source-note-list`，需 seeded 笔记）——见 M1。
+- ~~`setInputFiles` / react-dropzone~~：已随 upstream 重构作废。
 
 ### L3 — 索引到 completed + 看分块
 - **触发**：L2 的行可见、带状态 Badge
@@ -95,7 +100,7 @@
   | 断言 | 锚点 | 确定性 |
   |---|---|---|
   | 状态到 completed | **[T2✅]** 轮询 `[data-item-id='<id>'][data-status='completed']`（行属性，locale 无关）；有界 until-loop | partial（终态确定，向量值不断言） |
-  | view_chunks 菜单项可点 | **[U1 暂缓]** MenuItem 渲染为 `<button>` 无 `role=menuitem` → 按**文本** `knowledge.data_source.actions.view_chunks` 定位（仅 status=completed 渲染） | yes |
+  | view_chunks 菜单项可点 | **[live 复核]** upstream/main 上 MenuItem **已带 `role=menuitem`** → 可按角色或文本（zh-CN「查看 Chunks」）定位（仅 status=completed 渲染；**U1 作废**） | yes |
   | 分块面板渲染 | **[T3✅]** `[data-testid=kb-chunk-panel]` | yes |
   | chunks 计数 | **[T3✅]** `[data-testid=kb-chunks-count]`（text `knowledge.data_source.chunks_count`） | partial |
   | ≥1 分块卡 | **[T3✅]** `[data-testid=kb-chunk-card]`（≥1）；空态 EmptyState 不出现 | partial（≥1 确定，精确数不断言） |
@@ -108,8 +113,8 @@
 - **断言**（全 yes，纯本地状态）：
   | 断言 | 锚点 |
   |---|---|
-  | 抽屉标题 | text `knowledge.tabs.recall_test` |
-  | 搜索框 placeholder | `input[placeholder=knowledge.recall.placeholder]`（RecallSearchBar L51） |
+  | 抽屉标题 | text `knowledge.tabs.recall_test`（zh-CN「召回测试」） |
+  | 搜索框 placeholder | RecallSearchBar 输入框；placeholder 随 locale（zh-CN「输入测试 Query...」）→ 按 zh-CN 文本或结构定位 |
   | 空态 | text `knowledge.recall.empty_title` + `empty_description`（RecallTestBody L62-63） |
   | 空/纯空格时 submit 禁用 | `button:disabled` text `knowledge.recall.submit`（`canSearch` L15） |
   | 输入非空后 submit 启用 | `button:not(:disabled)` |
@@ -125,10 +130,10 @@
 - **live 依赖**：URL=network（仅 add-time 断言规避）；Note=none（seeded）
 
 ### M2 — 同名 dedupe / auto-rename（无冲突弹窗）
-- **同文件两次**：同一会话 `setInputFiles` 同路径两次 → `knowledge-source-file-list` 去重为 1（key=`getPathForFile`，AddKnowledgeItemDialog L59）→ **断言无任何冲突 modal**。
-- **同名不同目录**：`fixtures/knowledge/dupe/a/report.md` + `dupe/b/report.md` → 选中列表 2 项 → 提交 → 列表 2 行同名共存（key 是磁盘路径非 name）。
-- **确定性**：dedupe/共存/无 modal 全 yes（add-time 离线）；提交后行 partial。
-- **注**：v2 **已无** renderer 冲突弹窗；真冲突走主进程 → 行内 `role=alert` 报错条，非 modal。
+- ⚠️ **native picker 重构后需复核**：原"in-dialog 选中列表去重"语义随 dropzone 删除已不适用。改测**最终列表**：经 picker（osascript）分两次加入同名/同路径文件 → 断言 `[data-testid=kb-item-row]` 行数（同路径去重为 1；同名不同目录 → 2 行共存，key=磁盘路径非 name，dedupe 逻辑 AddKnowledgeItemDialog L59 仍在）。
+- **断言无任何冲突 modal**；真冲突走主进程 → 行内 `role=alert` 报错条，非 modal（v2 **已无** renderer 冲突弹窗）。
+- **确定性**：行数/无 modal = yes；具体由测试机在 upstream/main 上确认 picker 多选/重复打开行为。
+- **fixtures**：`dupe/a/report.md` + `dupe/b/report.md`（同 basename、异目录、异内容，repo 外）。
 
 ### M3 — RAG 配置：分块校验 + dirty/save 门控 + 持久化 ✅全确定性
 - **触发**：active 库（status≠failed）的 RAG 抽屉（`DetailHeader` `SlidersHorizontal` 按钮 → `RagConfigPanel` 的 `ActiveRagConfigPanel` 分支）
@@ -177,7 +182,7 @@
 - **重命名库**：库行菜单 → `knowledge.context.rename` → `KnowledgeBaseNameDialog`（`input#knowledge-entity-name`）→ `DetailHeader` h1（`class*=text-2xl`）更新
 - **navigator 搜索**：搜索框（placeholder `knowledge.search`）→ 输入不匹配 → 空态 `knowledge.empty`（preset `no-knowledge`）→ clear 按钮（`aria-label=common.clear`，仅非空时显）→ 恢复
 - **确定性**：全 yes（本地 DB/state）。3 处选择器用 `class*=` 模糊匹配（text-2xl / move_to 段 / Popover align）。
-- **菜单定位**：依赖 U1 的 `role=menuitem` 或按文本 fallback。
+- **菜单定位**：MenuItem 已带 `role=menuitem`（upstream/main，live 复核）→ 按角色或 zh-CN 文本定位。
 - **排除到 full**：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize（需合成鼠标事件）。
 
 ---
@@ -193,8 +198,8 @@
 
 ## 6. Fixtures 清单
 
-- `fixtures/knowledge/sample.md` — 小、含已知段落，一段是固定召回 query 的字面子串（L2/L3/L4/M5）
-- `fixtures/knowledge/dupe/a/report.md` + `dupe/b/report.md` — 同 basename、异目录、异内容（M2）
+- `sample.md` — 小、含已知段落，一段是固定召回 query 的字面子串（L2/L3/L4/M5）。**repo 外**（测试机置于 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`），picker 用绝对路径喂入
+- `dupe/a/report.md` + `dupe/b/report.md` — 同 basename、异目录、异内容（M2），同 repo 外
 - seeded 笔记目录（`notesPath` 指向 fixture 文件夹，≥1 .md）+ 空变体（M1 Note + 空态）
 - 稳定测试 URL（**优先本地静态页**，避免 flake；M1，仅 add-time 断言）
 - **secrets pool**（repo 外，`~/.cherry-e2e/secrets.local.json`）：`{ provider, apiKey, baseUrl?, embeddingModelId, secondEmbeddingModelId?(M3 文案切换), rerankModelId?(M4) }`
@@ -203,8 +208,9 @@
 
 ## 7. 开放问题（带入下一步）
 
-- **Q-testid**：2A 是否现在补？（建议是）2B 改码 vs workaround vs M6 缓做？
-- **Q-locale**：golden profile 跑哪个 locale？文本断言 locale 依赖 → 优先 testid/`data-*`/id/aria（=2A 的动机）。
+- ✅ **Q-testid（已定）**：2A 已补并 light live 验证通过；2B 中 **U1 作废**（upstream MenuItem 已有 `role=menuitem`）、**U2 随 M6 暂缓**。
+- ✅ **Q-locale（已定）**：golden profile = **zh-CN**；状态/行/分块关键断言走 2A 的 `data-*`（locale 无关），其余文本锚点写 zh-CN。
+- ✅ **Q-L2-ingest（已定 = 决策 B）**：file 源 native picker 用 osascript 驱动（macOS harness 步），gate 断言纯 DOM；note/url 为可移植 fallback。
 - **Q-rerank**：secrets pool 是否含 rerank 模型？无则 M4 rerank 子断言 + 标 skip-if-absent。
 - **Q-url-index**：M1 URL 定 add-only（已采纳）；是否需要本地静态页 fixture 以便未来测索引完成？
 - **Q-runner**：YAML schema + `.agents/skills/e2e-run` runner 尚未定型 → 本规格转 YAML 需先定 runner 契约。
