@@ -129,7 +129,8 @@
 
 ### M1 — URL + Note 源
 - **URL**：`input#knowledge-source-url-input`（placeholder `...url.placeholder`）→ footer `common.add` 空禁用/非空启用 → 提交 → 行出现带 `Link2` 图标（`text-cyan-500`）、类型列 `knowledge.data_source.filters.url`。**断言 add-time only**（索引会联网抓取，不等完成；live 见过抓取 HTTP 451，不影响 add-time gate）。确定性：add 步 yes，行图标 partial。
-- **Note**：Note tab → `[data-testid='knowledge-source-note-list']` → 勾选 → `common.add`；无笔记时空态 `...note.empty_title`。⚠️ **live：golden profile Notes 为空 → 仅空态可测，勾选添加 SKIP**；需先 seed ≥1 笔记（见 Q-note-seed）才能跑完整路径。
+- **Note**：Note tab（`...sources.note`）→ `[data-testid='knowledge-source-note-list']` 列出 `notesPath` 下每个 `.md`：行 = `label[role=listitem]`（Checkbox + NotebookPen 图标 + 名字 span[=文件名去 `.md`] + treePath）→ 按名字勾选 → footer `common.add` 启用 → 提交 → 行带 `StickyNote`/amber、类型「笔记」。空 `notesPath` → 空态 `note.empty_title`/`empty_description`。确定性：全 yes（seeded 后）。
+- **Note seeding（Q-note-seed 已解）**：笔记 = `notesPath`（pref `feature.notes.path`，**默认空字符串** → 不设则永远空态）目录下的 `.md`；`projectNotesTree` 纯遍历目录、**无需 frontmatter/索引**。golden profile 做法：① 设 `feature.notes.path` 指向 seed 目录（Notes 设置里选文件夹，或预置该 pref；默认数据目录 `<userData>/Data/Notes`）② 丢 ≥1 plain `.md`（如 `e2e-seed-note.md`，名字即列表显示名）。`useDirectoryTree` 实时读，丢完重开对话框即现；空态变体 = 指向空目录。
 - **live 依赖**：URL=network（仅 add-time 断言规避）；Note=none（seeded）
 
 ### M2 — 同名冲突对话框（保留全部 / 替换 / 取消）
@@ -213,7 +214,7 @@
 
 - `sample.md` — 小、含已知段落，一段是固定召回 query 的字面子串（L2/L3/L4/M5）。**repo 外**（测试机置于 `…/Cherry_Studio_E2E_Test/knowledge_test_docs/…`），picker 用绝对路径喂入
 - `dupe/a/report.md` + `dupe/b/report.md` — 同 basename、异目录、异内容（M2），同 repo 外
-- seeded 笔记目录（`notesPath` 指向 fixture 文件夹，≥1 .md）+ 空变体（M1 Note + 空态）
+- **笔记 seed**：`feature.notes.path`（pref，**默认空 → 须设**）指向 seed 目录 + ≥1 plain `.md`（无需 frontmatter，文件名=列表显示名）；空目录变体测空态（M1 Note）
 - 稳定测试 URL（**优先本地静态页**，避免 flake；M1，仅 add-time 断言）
 - **secrets pool**（repo 外，`~/.cherry-e2e/secrets.local.json`）：`{ provider, apiKey, baseUrl?, embeddingModelId, secondEmbeddingModelId?(M3 文案切换), rerankModelId?(M4) }`
 - **golden profile**（repo 外）：预配 embedding provider+key（+可选 2 embedding 模型 + 1 rerank），light/medium 默认起点
@@ -225,7 +226,7 @@
 - ✅ **Q-locale（已定）**：golden profile = **zh-CN**；状态/行/分块关键断言走 2A 的 `data-*`（locale 无关），其余文本锚点写 zh-CN。
 - ✅ **Q-L2-ingest（已定 = 决策 B）**：file 源 native picker 用 osascript 驱动（macOS harness 步），gate 断言纯 DOM；note/url 为可移植 fallback。
 - ✅ **Q-rerank（已定）**：live M4 含 rerank 子断言 PASS（profile 有 rerank 模型）；无 rerank 的环境标 skip-if-absent。
-- ⚠️ **Q-note-seed（待解）**：M1 Note 完整路径需 golden profile 预置 ≥1 笔记；当前为空 → Note 仅空态可测。**决定 seed 方式**（建笔记 / 注入 notes 存储）或接受 Note 只测空态。
+- ✅ **Q-note-seed（已解）**：笔记 = `feature.notes.path`（pref，默认空）目录下的 plain `.md`（`projectNotesTree` 纯遍历，无需 frontmatter）。golden profile 设该 pref 指向 seed 目录 + 丢 `e2e-seed-note.md`；空目录 = 空态变体。测试机据此补跑 M1 Note 完整路径。
 - **Q-url-index**：M1 URL 定 add-only（已采纳）；是否需要本地静态页 fixture 以便未来测索引完成？
 - **Q-runner**：YAML schema + `.agents/skills/e2e-run` runner 尚未定型 → 本规格转 YAML 需先定 runner 契约。
 - **Q-secrets**：live key 注入机制（env / 加密 fixture）确认后才能跑任一 live-key 例。
