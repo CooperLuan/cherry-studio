@@ -124,16 +124,29 @@
 
 ## 4. Medium 层（累积含 Light，全确定性 gate）
 
+> ✅ **Medium live 验证（2026-06-26，测试机 / agent-browser / zh-CN）**：**M3 ✅ · M4 ✅ · M5 ✅ · M7 ✅**；**M1 PARTIAL**（URL add-time PASS；Note 因 profile 无笔记仅空态可测）；**M2 已纠正**（冲突对话框确实存在，见下）。截图 `…/kb-medium-001/`。
+> 漂移：M2 有冲突对话框（旧 spec 误判）、M5 copy 成功态无 `text-success`、M1 Note 需 seeding —— 均已并入。
+
 ### M1 — URL + Note 源
-- **URL**：`input#knowledge-source-url-input`（placeholder `...url.placeholder`）→ footer `common.add` 空禁用/非空启用 → 提交 → 行出现带 `Link2` 图标（`text-cyan-500`）、类型列 `knowledge.data_source.filters.url`。**断言 add-time only**（索引会联网抓取，不等完成）。确定性：add 步 yes，行图标 partial。
-- **Note**：Note tab → `[data-testid='knowledge-source-note-list']`（已存在）→ 勾选 → `common.add`。无笔记时空态 `...note.empty_title`。需 seeded 笔记目录。全 yes。
+- **URL**：`input#knowledge-source-url-input`（placeholder `...url.placeholder`）→ footer `common.add` 空禁用/非空启用 → 提交 → 行出现带 `Link2` 图标（`text-cyan-500`）、类型列 `knowledge.data_source.filters.url`。**断言 add-time only**（索引会联网抓取，不等完成；live 见过抓取 HTTP 451，不影响 add-time gate）。确定性：add 步 yes，行图标 partial。
+- **Note**：Note tab → `[data-testid='knowledge-source-note-list']` → 勾选 → `common.add`；无笔记时空态 `...note.empty_title`。⚠️ **live：golden profile Notes 为空 → 仅空态可测，勾选添加 SKIP**；需先 seed ≥1 笔记（见 Q-note-seed）才能跑完整路径。
 - **live 依赖**：URL=network（仅 add-time 断言规避）；Note=none（seeded）
 
-### M2 — 同名 dedupe / auto-rename（无冲突弹窗）
-- ⚠️ **native picker 重构后需复核**：原"in-dialog 选中列表去重"语义随 dropzone 删除已不适用。改测**最终列表**：经 picker（osascript）分两次加入同名/同路径文件 → 断言 `[data-testid=kb-item-row]` 行数（同路径去重为 1；同名不同目录 → 2 行共存，key=磁盘路径非 name，dedupe 逻辑 AddKnowledgeItemDialog L59 仍在）。
-- **断言无任何冲突 modal**；真冲突走主进程 → 行内 `role=alert` 报错条，非 modal（v2 **已无** renderer 冲突弹窗）。
-- **确定性**：行数/无 modal = yes；具体由测试机在 upstream/main 上确认 picker 多选/重复打开行为。
-- **fixtures**：`dupe/a/report.md` + `dupe/b/report.md`（同 basename、异目录、异内容，repo 外）。
+### M2 — 同名冲突对话框（保留全部 / 替换 / 取消）
+- ✅ **live 复核（2026-06-26）：冲突对话框确实存在**——旧 spec「无 modal、按路径去重」**误判已纠正**（PR #16188/#16189 已合并，组件 `addKnowledgeItemDialog/KnowledgeAddConflictDialog.tsx`，见记忆 [[knowledge-add-conflict-dialog]]）。
+- **触发**：已有 item 后，再经 picker 加入**同名**源（同 basename / 同 relativePath）→ 弹对话框（同路径重复、同名不同目录**均触发**，**按名判定非路径**）。
+- **断言（确定性 DOM，zh-CN）**：
+  | 断言 | 锚点 |
+  |---|---|
+  | 对话框出现 | title `knowledge.data_source.add_dialog.conflict_dialog.title`（「存在同名数据源」） |
+  | 列出冲突项 | `<ul><li>` text=冲突项标题 + 类型图标 |
+  | 三操作按钮 | `...conflict_dialog.keep_all`（「保留全部」emphasis）/ `...replace`（「替换」destructive）/ `common.cancel`（「取消」outline） |
+  | 「保留全部」→ 两行共存 | 点 keep_all（resolution=`rename`，新项自动 `_N` 改名）→ `[data-testid=kb-item-row]` 计为 2 |
+  | 「替换」→ 仍 1 行 | 点 replace（覆盖原项）→ 1 行 |
+  | 「取消」→ 无变化 | 点 cancel / Esc → 对话框关、行数不变 |
+- **确定性**：对话框 + 三按钮 + 解析后行数 = yes（add-time，不断言重嵌入）。
+- **fixtures**：`dupe/a/report.md` + `dupe/b/report.md`（同 basename）；或同一文件重复加。
+- **注**：`ConflictResolution = 'rename' | 'replace'`（rename=保留全部共存，replace=覆盖）；对话框无 testid → 按 zh-CN 文本定位（如需可后续补 testid）。
 
 ### M3 — RAG 配置：分块校验 + dirty/save 门控 + 持久化 ✅全确定性
 - **触发**：active 库（status≠failed）的 RAG 抽屉（`DetailHeader` `SlidersHorizontal` 按钮 → `RagConfigPanel` 的 `ActiveRagConfigPanel` 分支）
@@ -161,7 +174,7 @@
 - **搜索信封**（partial — 断言壳，不断言结果）：提交 → searching 态 `knowledge.recall.searching` + `svg.animate-spin` + submit 禁用 → 摘要出现：count（`knowledge.recall.result_count`）/ duration（`knowledge.recall.duration`）/ scoreKind（`knowledge.recall.ranking_only` 或 top_score）
 - **历史 CRUD**（全 yes）：搜后 query 入历史首位 → focus 输入开 `div[data-recall-history]`（标题 `knowledge.recall.history_title`）→ 点历史项回填输入且不自动搜 → 单项删除（`aria-label=knowledge.recall.history_remove`）→ 清空（`knowledge.recall.history_clear`）
 - **结果卡确定性子行为**（全 yes，从草案 F8 上提）：
-  - copy 按钮（`aria-label=knowledge.recall.copy`）点击 → `lucide-copy` → `lucide-check` + `text-success`（2s 后回切 = partial，不 gate）
+  - copy 按钮（`aria-label=knowledge.recall.copy`）点击 → 图标 `lucide-copy` → `lucide-check`（**只 gate 图标切换**；live 复核成功态**无** `text-success` class → 不 gate 颜色；2s 后回切 = partial 不 gate）
   - 展开/收起：`p.line-clamp-2` ↔ 无 clamp，`aria-label` `knowledge.recall.expand` ↔ `collapse`，ChevronDown ↔ ChevronUp
 - **非 gating（降级到 full F8）**：结果排序、分数值、命中内容、source name、chunk index `#N`
 - **live 依赖**：embedding-key（vector/hybrid 走 `embedKnowledgeQuery`）。**只断言信封 + 历史/卡交互**。
@@ -211,7 +224,8 @@
 - ✅ **Q-testid（已定）**：2A 已补并 light live 验证通过；2B 中 **U1 作废**（upstream MenuItem 已有 `role=menuitem`）、**U2 随 M6 暂缓**。
 - ✅ **Q-locale（已定）**：golden profile = **zh-CN**；状态/行/分块关键断言走 2A 的 `data-*`（locale 无关），其余文本锚点写 zh-CN。
 - ✅ **Q-L2-ingest（已定 = 决策 B）**：file 源 native picker 用 osascript 驱动（macOS harness 步），gate 断言纯 DOM；note/url 为可移植 fallback。
-- **Q-rerank**：secrets pool 是否含 rerank 模型？无则 M4 rerank 子断言 + 标 skip-if-absent。
+- ✅ **Q-rerank（已定）**：live M4 含 rerank 子断言 PASS（profile 有 rerank 模型）；无 rerank 的环境标 skip-if-absent。
+- ⚠️ **Q-note-seed（待解）**：M1 Note 完整路径需 golden profile 预置 ≥1 笔记；当前为空 → Note 仅空态可测。**决定 seed 方式**（建笔记 / 注入 notes 存储）或接受 Note 只测空态。
 - **Q-url-index**：M1 URL 定 add-only（已采纳）；是否需要本地静态页 fixture 以便未来测索引完成？
 - **Q-runner**：YAML schema + `.agents/skills/e2e-run` runner 尚未定型 → 本规格转 YAML 需先定 runner 契约。
 - **Q-secrets**：live key 注入机制（env / 加密 fixture）确认后才能跑任一 live-key 例。
