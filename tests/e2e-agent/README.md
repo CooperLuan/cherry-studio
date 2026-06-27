@@ -96,9 +96,9 @@ steps:
 { id, title, tier, domain, locale, source,
   steps: [{ index, yaml, label, ok, actual?, resolved: { selector, found?, tag?, role?, ariaLabel?, dataSlot?, text? } }] }
 ```
-- **禁入仓字段（必须剥）**：本机绝对路径与 run 专属 ephemera——`runBase` / `screenDir` / `cdpPort` / `runner`(run-id) / `compiledAt` / `head`，以及每步 `screenshot` 绝对路径。它们对别的 checkout 无意义、每跑都变、且违反「禁 commit 绝对路径」。剥这些后**相同解析 → 字节相同的文件**（无 churn），diff 只在 selector 真变时出现；provenance（哪个 commit 重编的）由 `.compiled` 文件自身的 git 历史承载。
-- **截图 = 诊断附件**：留在测试机 run 目录（`/tmp/cherry-migration-e2e/…`）、随失败报告走，**不进 repo**（v1 不做视觉回归）。
-- runner 应直接 emit 此形态；若 emit 了 ephemera，commit 前用 `del(.runBase,.screenDir,.cdpPort,.runner,.compiledAt,.head) | .steps|=map(del(.screenshot))` 之类剥净并 re-grep `/(Users|tmp)/|cherry-e2e|run-ws-` 确认零命中。
+- **禁入仓字段（必须剥）**：本机绝对路径与 run 专属 ephemera——`runBase` / `screenDir` / `screenshotDir` / `cdpPort` / `runner`(run-id) / `compiledAt` / `head`，以及每步 `screenshot` 绝对路径。⚠️**字段名因 runner 而异**（如 websearch runner 用 `screenDir`、fileprocessing runner 用 `screenshotDir`）→ 剥离清单须覆盖两者。它们对别的 checkout 无意义、每跑都变、且违反「禁 commit 绝对路径」。剥这些后**相同解析 → 字节相同的文件**（无 churn），diff 只在 selector 真变时出现；provenance（哪个 commit 重编的）由 `.compiled` 文件自身的 git 历史承载。
+- **截图 = 诊断附件**：留在测试机 run 目录（`/tmp/cherry-migration-e2e/…` 或 `~/.cherry-e2e/screenshots/…`）、随失败报告走，**不进 repo**（v1 不做视觉回归）。
+- runner 应直接 emit 此形态；若 emit 了 ephemera，commit 前用 `del(.runBase,.screenDir,.screenshotDir,.cdpPort,.runner,.compiledAt,.head) | .steps|=map(del(.screenshot))` 剥净并 re-grep `/(Users|tmp)/|cherry-e2e|run-(ws|fp)-` 确认零命中。**已落地教训**：fileprocessing 首版 `.compiled`（commit `b96748178`）漏剥 `screenshotDir`+`screenshot`→把 `/Users/cherryai004/...` 绝对路径提交进公开 PR，须补一次 strip。
 
 ## 4. 前置 / fixtures / secrets（repo 外引用）
 
