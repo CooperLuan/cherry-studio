@@ -91,7 +91,14 @@ steps:
 2. **重放（replay）**：直接执行 `.compiled` 的已解析定位，**无 LLM**、确定性。`check` 失败 / 定位丢失 → 进自愈。
 3. **自愈（self-heal）**：从该步的语义（`do`/`intent` + `by`）让 LLM **重新解析定位**，**临时**用 + **报告漂移**，**不自动提交 `.compiled`**（漂移交人确认，对齐架构）。
 
-`.compiled/<id>.json`（形态草案）：`{ id, compiledAt, locale, steps:[{ index, resolved:{selector,screenshot}, ok }], checks:[...] }`。
+**`.compiled/<id>.json`（repo-portable 形态，已定档）**：只存可移植、稳定的解析结果——
+```
+{ id, title, tier, domain, locale, source,
+  steps: [{ index, yaml, label, ok, actual?, resolved: { selector, found?, tag?, role?, ariaLabel?, dataSlot?, text? } }] }
+```
+- **禁入仓字段（必须剥）**：本机绝对路径与 run 专属 ephemera——`runBase` / `screenDir` / `cdpPort` / `runner`(run-id) / `compiledAt` / `head`，以及每步 `screenshot` 绝对路径。它们对别的 checkout 无意义、每跑都变、且违反「禁 commit 绝对路径」。剥这些后**相同解析 → 字节相同的文件**（无 churn），diff 只在 selector 真变时出现；provenance（哪个 commit 重编的）由 `.compiled` 文件自身的 git 历史承载。
+- **截图 = 诊断附件**：留在测试机 run 目录（`/tmp/cherry-migration-e2e/…`）、随失败报告走，**不进 repo**（v1 不做视觉回归）。
+- runner 应直接 emit 此形态；若 emit 了 ephemera，commit 前用 `del(.runBase,.screenDir,.cdpPort,.runner,.compiledAt,.head) | .steps|=map(del(.screenshot))` 之类剥净并 re-grep `/(Users|tmp)/|cherry-e2e|run-ws-` 确认零命中。
 
 ## 4. 前置 / fixtures / secrets（repo 外引用）
 
@@ -133,7 +140,7 @@ steps:
 
 - **`e2e-run` skill 实现**：需对齐 **agent-browser 实际命令面**（§2.2/2.3 verb → agent-browser 原语），在测试机侧落地。
 - **自愈范围**：仅重解析定位 vs 重排步骤——倾向**仅定位**（步骤改动交人）。
-- **`.compiled` 截图基线**用途：仅诊断附件，还是参与视觉回归（v1 不做视觉 gate）。
+- ~~**`.compiled` 截图基线**用途~~：**已定**——截图仅诊断附件、不进 repo；`.compiled` 只存可移植解析结果（见 §3 portable 形态）。v1 不做视觉 gate。
 - 现状：
   - **knowledge**：11 个 light/medium case 已 live 验证并编码（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。
   - **websearch**：9 个 light/medium case 已 live 校准并编码，**全 9 PASS**（light L1-L4 · medium M1-M5；M5 首版 disabled-gate 因 golden 活动模型支持 web search 而 FAIL→转向 enable/disable toggle 并复跑确认；删除 CRUD/disabled-state/真实搜索 推 full M2b/M5c/M6）。见 [`websearch/light-medium.md`](websearch/light-medium.md)。
