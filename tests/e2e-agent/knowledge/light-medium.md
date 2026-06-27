@@ -217,7 +217,7 @@
 - `dupe/a/report.md` + `dupe/b/report.md` — 同 basename、异目录、异内容（M2），同 repo 外
 - **笔记 seed**：`feature.notes.path`（pref，**默认空 → 须设**）指向 seed 目录 + ≥1 plain `.md`（无需 frontmatter，文件名=列表显示名）；空目录变体测空态（M1 Note）
 - 稳定测试 URL（**优先本地静态页**，避免 flake；M1，仅 add-time 断言）
-- **secrets pool**（repo 外，`~/.cherry-e2e/secrets.local.json`）：`{ provider, apiKey, baseUrl?, embeddingModelId, secondEmbeddingModelId?(M3 文案切换), rerankModelId?(M4) }`
+- **secrets pool**（repo 外，`~/.cherry-e2e/secrets.local.json`）：`activeProviders.knowledge` 是 provider 候选数组（如 `["cherryInExpress","ollama"]`），每个 `providers.<id>` 档案包含 `{ apiKey, baseUrl?, embeddingModelId, secondEmbeddingModelId?(M3 文案切换), rerankModelId?(M4) }`
 - **golden profile**（repo 外）：预配 embedding provider+key（+可选 2 embedding 模型 + 1 rerank），light/medium 默认起点
 - seeded 助手 + 1 条已知内容消息（M6 内容类型计数稳定）
 

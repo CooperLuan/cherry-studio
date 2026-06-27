@@ -102,12 +102,21 @@ steps:
 
 ## 4. 前置 / fixtures / secrets（repo 外引用）
 
-真值只存 **repo 外** `~/.cherry-e2e/secrets.local.json`；repo 内只放脱敏模板 [`secrets.example.json`](secrets.example.json)（**禁止 commit 真 key / 内部域名 / 绝对路径**）。配置一份、可切 provider、命名对齐 YAML 引用：
+真值只存 **repo 外** `~/.cherry-e2e/secrets.local.json`；repo 内只放脱敏模板 [`secrets.example.json`](secrets.example.json)（**禁止 commit 真 key / 内部域名 / 绝对路径**）。配置一份，按 feature/domain 指定可用 provider 列表，命名对齐 YAML 引用：
 
 ```jsonc
 {
-  "activeProvider": "ollama",                  // 切 provider 只改这一行
+  "activeProviders": {                         // 每个 feature/domain 可配置多个 provider，按顺序作为候选
+    "knowledge": ["cherryInExpress", "ollama"]
+  },
   "providers": {                               // provider 档案库（每个一套 key/baseUrl/模型 id）
+    "cherryInExpress": {
+      "apiKey": "<set-in-local-json-only>",
+      "baseUrl": "https://<your-endpoint>",
+      "embeddingModelId": "cherryInExpress::<embedding-model>",
+      "secondEmbeddingModelId": "cherryInExpress::<second-embedding-model>",
+      "rerankModelId": "cherryInExpress::<rerank-model>"
+    },
     "ollama": {
       "apiKey": "", "baseUrl": "http://127.0.0.1:11434",
       "embeddingModelId": "ollama::qwen3-embedding:0.6b",
@@ -126,8 +135,8 @@ steps:
 }
 ```
 
-- **解析规则（runner / agent 必须照此取值）**：`${secrets.<key>}` → `providers[activeProvider].<key>`；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值为 `null` 或缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`→M4 rerank 子断言）。
-- **secrets key（per provider）**：`apiKey` / `baseUrl` / `embeddingModelId`(L1) / `secondEmbeddingModelId`(M3 文案切换) / `rerankModelId`(M4,可选)。`two-embedding-models` 前置 = 该 provider 同时有前两个 embedding id。
+- **解析规则（runner / agent 必须照此取值）**：`${secrets.<key>}` → 从 `activeProviders[domain]` 按顺序取第一个在 `providers[provider]` 中定义该 key 且值非 `null` 的 provider；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值为 `null` 或缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`→M4 rerank 子断言）。不存在 `activeProvider` 单数配置。
+- **secrets key（per provider）**：`apiKey` / `baseUrl` / `embeddingModelId`(L1) / `secondEmbeddingModelId`(M3 文案切换) / `rerankModelId`(M4,可选)。`two-embedding-models` 前置 = `activeProviders[domain]` 中至少一个 provider 同时有前两个 embedding id。
 - **fixtures**：`sample-md`(L2/L3) / `dupe-a`+`dupe-b`(M2,**同 basename 异目录**) / `recall-query`(M5,字符串=sample.md 字面子串) / `seed-note`(M1)。
 - **prereqs**（非 local.json，由 harness 置 app 态）：`golden-profile`(老用户+key,zh-CN；真身 `~/.cherry-e2e/golden-profileDev`，dev 强制 `Dev` 后缀 → per-run 复制到 `<base>Dev`、启动传 `<base>`)、`no-existing-kb`、`completed-base`、`no-existing-group`、`notes-seeded`(`feature.notes.path` 指 seed 目录 + plain `.md`)、`notes-empty`、`two-embedding-models`、`rerank-model`(可选)。
 

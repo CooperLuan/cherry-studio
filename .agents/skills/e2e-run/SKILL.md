@@ -22,7 +22,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 
 - `agent-browser` 已装；`pnpm install` 完成；mise/Node ≥22。
 - **golden profile**（repo 外，真身 `~/.cherry-e2e/golden-profileDev`）：老用户 + 可用 provider/key（CherryInExpress 等）+ 网络搜索 + 文件处理引擎（mineru/paddleocr）+ zh-CN locale；业务数据空（库/笔记/agent 由 case 自建）。⚠️ **dev 模式强制给 `--user-data-dir` 追加 `Dev` 后缀**（`src/main/core/preboot/userDataLocation.ts` 的 `DEFAULT_DEV_USER_DATA_SUFFIX='Dev'`）——故 golden 真身目录名带 `Dev`：**维护** golden 传 `--user-data-dir=.../golden-profile`（app 实际读写 `golden-profileDev` 本体）；**per-run 隔离**把 golden **复制到 `<base>Dev`**、启动传 `--user-data-dir=<base>`（见 Phase 1）。
-- **secrets / fixtures**：`~/.cherry-e2e/secrets.local.json`（repo 外，脱敏模板见 repo 内 `tests/e2e-agent/secrets.example.json`）。**取值规则**：`${secrets.<key>}` → `providers[activeProvider].<key>`（如 `${secrets.embeddingModelId}` 取当前 `activeProvider` 档案的 embedding id）；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值 `null`/缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`）。**切 provider 只改 `activeProvider`**。
+- **secrets / fixtures**：`~/.cherry-e2e/secrets.local.json`（repo 外，脱敏模板见 repo 内 `tests/e2e-agent/secrets.example.json`）。**取值规则**：`${secrets.<key>}` → 从 `activeProviders[domain]` 按顺序取第一个在 `providers[provider]` 中定义该 key 且值非 `null` 的 provider；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值 `null`/缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`）。不存在 `activeProvider` 单数配置；切 provider 候选只改对应 feature/domain 的 `activeProviders` 数组。
 - **prereqs**：`golden-profile` / `completed-base` / `notes-seeded` / `no-existing-group` … 由 harness 在每 case 前置满足（详见 README §4 + 域 spec）。
 
 ## 工作流
