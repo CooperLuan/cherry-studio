@@ -1,0 +1,107 @@
+{
+  "id": "fp-m3-apihost-validation",
+  "title": "API 地址非法校验",
+  "tier": "medium",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/medium/FP-M3-apihost-validation.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "button[aria-label=\"设置\"]",
+        "found": true
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.file_processing.title"
+        }
+      },
+      "label": "click-text:文档解析",
+      "ok": true,
+      "resolved": {
+        "selector": "text=文档解析",
+        "found": true,
+        "text": "文档解析"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-image_to_text-mistral"
+        }
+      },
+      "label": "click-#fp-item-image_to_text-mistral",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-image_to_text-mistral",
+        "found": true,
+        "id": "fp-item-image_to_text-mistral"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "API 地址填非法值（type 替换既有 host）",
+        "do": "type",
+        "by": {
+          "placeholder-i18n": "settings.provider.api_host"
+        },
+        "text": "not a url"
+      },
+      "label": "type-input[placeholder=\"API 地址\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=input[placeholder=\"API 地址\"]",
+        "found": true,
+        "placeholder": "API 地址",
+        "value": "not a url"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "intent": "blur 触发校验",
+        "do": "press",
+        "keys": "Tab"
+      },
+      "label": "press-#nav",
+      "ok": true,
+      "resolved": {
+        "keys": "Tab"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "settings.tool.file_processing.errors.invalid_api_host"
+        }
+      },
+      "label": "visible-text:API 地址不合法",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=API 地址不合法",
+        "found": true,
+        "text": "API 地址不合法"
+      }
+    }
+  ]
+}

@@ -6,7 +6,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 # e2e-run — deterministic agent-browser E2E runner（草案 / scaffold）
 
 > **状态**：YAML 契约（[`tests/e2e-agent/README.md`](../../../tests/e2e-agent/README.md)）+ light/medium 用例已 live 验证并编码。
-> 本 skill 是**执行契约草案**——把 §2 的 DSL verb 落到 **agent-browser 实际命令面**这一步，由测试机在首次接入时确认并回填 `## DSL → agent-browser 绑定`。绑定确认前，本 skill 以**带人确认的半自动**方式跑（每个 `do`/`check` 由 agent 解释执行 + 截图）。
+> 本 skill 是**执行契约草案**——把 §2 的 DSL verb 落到 **agent-browser 实际命令面**这一步，已于 fileprocessing 首跑 compile 确认并回填 `## DSL → agent-browser 绑定`。**有 `.compiled/` 的用例可确定性重放**；尚无 `.compiled` 的用例仍以**带人确认的半自动**方式跑（每个 `do`/`check` 由 agent 解释执行 + 截图）。
 
 ## 触发与参数
 
@@ -50,7 +50,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 每个 case：
 
 1. **置前置**：按 `prereqs` 让 harness 把 App 带到起点（建库、seed 笔记、清分组…）；继承 `after` 链上一 case 的态。
-2. **compile（首跑或无 `.compiled`）**：按 `steps` 顺序驱动 agent-browser；逐步把 `by:` 解析成实际定位 + 截图，写 `tests/e2e-agent/<domain>/.compiled/<id>.json`；`check:` 记基线。
+2. **compile（首跑或无 `.compiled`）**：按 `steps` 顺序驱动 agent-browser；逐步把 `by:` 解析成实际定位，写 `tests/e2e-agent/<domain>/.compiled/<id>.json`；截图只留 repo 外 run 目录作诊断附件；`check:` 记基线。
 3. **replay（有 `.compiled`）**：直接执行已解析定位，**无 LLM**、确定性。`check` 失败 / 定位丢失 → 自愈。
 4. **self-heal**：从该步语义（`do`/`intent` + `by`）让 LLM **重解析定位**，**临时**用 + **报告漂移**，**不自动改 `.compiled`**（漂移交人确认）。
 5. `skip-if-absent: <ref>` 引用不满足 → 跳过该步（如无 rerank 模型）；记为 skipped 非 fail。
@@ -67,24 +67,32 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 - **有失败** → 另写飞书 Doc：复现步骤 + 逐步截图 + 诊断 + 漂移项；`full` 失败附根因。
 - **blocked/skipped** 单列，不计入 pass/fail，但在卡片注明。
 
-## DSL → agent-browser 绑定（**待测试机确认后回填**）
+## DSL → agent-browser 绑定（**已绑定：fileprocessing 首跑 compile，2026-06-27**）
 
-`do`/`check` verb（README §2.2/2.3）→ agent-browser 原语的映射。下表为**待确认占位**，测试机首次接入时按实际命令面校正：
+`do`/`check` verb（README §2.2/2.3）→ agent-browser 原语的映射。以下绑定已在 `fileprocessing` light+medium 首跑 compile 中验证；`.compiled/<id>.json` 只记录 repo-portable 的 resolved selector 与基线事实，截图留 repo 外 run 目录作诊断附件。若页面存在隐藏副本（设置页有 warmup/重复 DOM），重放必须按**可见实例**执行，而不是只按全局 selector 首个节点。
 
-| DSL | 预期 agent-browser 形态（占位） |
+| DSL | agent-browser 命令面（已绑定） |
 |---|---|
-| `by: {testid}` / `{id}` / `{aria}` / `{role+i18n}` | `snapshot -i` 选元素 / CSS / role 查询（i18n key 先按 case `locale` 解析成文本） |
-| `do: click` / `type` / `hover` / `press` | 对应交互原语；`type` = 清空后填（非追加） |
-| `do: select` | 下拉选 option（按内部值 `vector`/`hybrid`/`bm25`） |
-| `do: pick-model` | 打开 KnowledgeModelSelect → 按 `${secrets.*ModelId}` 选 |
-| `do: shell osascript: pick-file` | **OS 逃生口**：macOS `osascript` 驱动原生「打开」框，`Cmd+Shift+G` 输 fixture 绝对路径（agent-browser 驱不动原生 picker） |
-| `do: wait` | 显式等待（`by:` 可见 / `timeout`），替代 sleep |
-| `check: visible/hidden/enabled/disabled` | DOM 存在性 / `disabled` 属性 |
-| `check: attr` | `agent-browser eval` 读属性等值（如 `data-status`），可带有界轮询 `timeout` |
-| `check: count` | 计 `[data-testid=…]` 数量（`equals` / `min`） |
-| `check: text` | 正则匹配（信封类，如 `\d+ 结果`） |
-
-> 绑定确认前：本 skill 对每步以 `snapshot -i` 发现元素 + 解释执行 + 截图的方式半自动跑，人确认 gate。确认后把上表替换为真实命令并标注「已绑定」。
+| `by: { id: "x" }` | CSS `#x`，动作/断言取可见实例；如 `#fp-item-document_to_markdown-mineru`。 |
+| `by: { testid, attr }` | CSS `[data-testid="..."][data-feature="..."][data-processor-id="..."]`，用于默认 Badge 等稳定锚点。 |
+| `by: { i18n }` | 按 case `locale` 解析文本；点击优先 `agent-browser find role button click --name <文本>`，可见性用 DOM 可见文本轮询。 |
+| `by: { aria-i18n }` / `{ aria }` | 解析为 `[aria-label="<文本>"]` 后 `agent-browser click` / `is visible`；fileprocessing 实测 `settings.provider.api.key.list.open` = `打开管理界面`。 |
+| `by: { placeholder-i18n }` | 解析为 `input[placeholder="<文本>"]`；用于 API key/password 与 API 地址输入。 |
+| `by: { role, has-text }` | `agent-browser find role <role> ... <text>` 或 CSS `[role="<role>"]:has-text("<text>")`；用于 Radix `role=option`。 |
+| `do: goto nav: settings` | `agent-browser click 'button[aria-label="设置"]'`；随后按设置左列目标项继续点击（如「文档解析」）。 |
+| `do: click` | `agent-browser click <resolved selector>`；文本按钮用 role/name，id/testid/aria 用 CSS。 |
+| `do: type` | `agent-browser click <input>` → `agent-browser press Meta+A` → `agent-browser press Backspace` → `agent-browser keyboard type <text>`；语义是替换而非追加。 |
+| `do: select` | `agent-browser click <combobox selector>` → `agent-browser click '[role="option"]:has-text("<option>")'`；用于 PaddleOCR 解析模型。 |
+| `do: press` | `agent-browser press <keys>`；用于 `Escape` 关闭 Select/Dialog、`Tab` blur 触发校验。 |
+| `check: visible` / `hidden` | `agent-browser is visible <selector>`；隐藏断言按可见元素数为 0，避免隐藏重复 DOM 误判。 |
+| `check: enabled` / `disabled` | `agent-browser is enabled <selector>`；`disabled` = enabled 为 false 或原生 disabled。 |
+| `check: attr` | `agent-browser get attr <name> <selector>` 或 `agent-browser eval` 有界轮询。 |
+| `check: count` | `agent-browser get count <selector>`；仅用于确定性 DOM 数量，不断搜索结果/生成内容。 |
+| `check: text` | `agent-browser get text <selector>` 后正则匹配信封类文本。 |
+| `do: hover` | `agent-browser hover <selector>`（本次 fileprocessing 未用到，命令面已确认存在）。 |
+| `do: wait` | `agent-browser wait <selector>` 或 `agent-browser wait <ms>`；优先 selector 可见等待。 |
+| `do: pick-model` | 打开 KnowledgeModelSelect 后按 `${secrets.*ModelId}` 对应可见项点击（fileprocessing 未用到，保留待 knowledge compile 复核）。 |
+| `do: shell osascript: pick-file` | **OS 逃生口**：macOS `osascript` 驱动原生「打开」框，`Cmd+Shift+G` 输 fixture 绝对路径（agent-browser 驱不动原生 picker）。 |
 
 ## 约束（同 cherry-pr-test）
 
@@ -95,6 +103,6 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 ## 现状 / 待办
 
 - ✅ knowledge light（L1-L4）+ medium（M1-M5/M7）已 live 验证并编码（M6 暂缓，依赖 `packages/ui` 2B）。
-- ⏳ **DSL → agent-browser 绑定表**待测试机首次接入回填。
-- ⏳ `.compiled/<id>.json` 由首跑 compile 产出后入 repo。
+- ✅ **DSL → agent-browser 绑定表**已于 fileprocessing 首跑 compile 回填（见「DSL → agent-browser 绑定」节）。
+- ✅ fileprocessing（8）+ websearch（9）`.compiled/<id>.json` 已由首跑 compile 产出入 repo；knowledge 待首跑产出。
 - ⏳ 飞书 IM 卡片 / Base 台账 / 失败 Doc 的具体模板对齐 bridge 输出格式。

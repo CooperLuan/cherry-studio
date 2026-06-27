@@ -1,0 +1,150 @@
+{
+  "id": "fp-l2-default-badge",
+  "title": "默认引擎 Badge 校验",
+  "tier": "light",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/light/FP-L2-default-badge.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "button[aria-label=\"设置\"]",
+        "found": true
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.file_processing.title"
+        }
+      },
+      "label": "click-text:文档解析",
+      "ok": true,
+      "resolved": {
+        "selector": "text=文档解析",
+        "found": true,
+        "text": "文档解析"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "intent": "文档默认 mineru 挂默认 Badge",
+        "check": "visible",
+        "by": {
+          "testid": "fp-menu-default-badge",
+          "attr": {
+            "data-feature": "document_to_markdown",
+            "data-processor-id": "mineru"
+          }
+        }
+      },
+      "label": "visible-[data-testid=\"fp-menu-default-badge\"][data-feature=\"document_to_markdown\"][data-processor-id=\"mineru\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[data-testid=\"fp-menu-default-badge\"][data-feature=\"document_to_markdown\"][data-processor-id=\"mineru\"]",
+        "found": true,
+        "testid": "fp-menu-default-badge",
+        "dataFeature": "document_to_markdown",
+        "dataProcessorId": "mineru"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "图片默认 paddleocr 挂默认 Badge",
+        "check": "visible",
+        "by": {
+          "testid": "fp-menu-default-badge",
+          "attr": {
+            "data-feature": "image_to_text",
+            "data-processor-id": "paddleocr"
+          }
+        }
+      },
+      "label": "visible-[data-testid=\"fp-menu-default-badge\"][data-feature=\"image_to_text\"][data-processor-id=\"paddleocr\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[data-testid=\"fp-menu-default-badge\"][data-feature=\"image_to_text\"][data-processor-id=\"paddleocr\"]",
+        "found": true,
+        "testid": "fp-menu-default-badge",
+        "dataFeature": "image_to_text",
+        "dataProcessorId": "paddleocr"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-document_to_markdown-mineru"
+        }
+      },
+      "label": "click-#fp-item-document_to_markdown-mineru",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-document_to_markdown-mineru",
+        "found": true,
+        "id": "fp-item-document_to_markdown-mineru"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "fp-panel-default-badge",
+          "attr": {
+            "data-processor-id": "mineru"
+          }
+        }
+      },
+      "label": "visible-[data-testid=\"fp-panel-default-badge\"][data-processor-id=\"mineru\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[data-testid=\"fp-panel-default-badge\"][data-processor-id=\"mineru\"]",
+        "found": true,
+        "testid": "fp-panel-default-badge",
+        "dataProcessorId": "mineru"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "i18n": "settings.tool.file_processing.actions.set_as_default"
+        }
+      },
+      "label": "hidden-button:has-text(\"设为默认\")",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "button:has-text(\"设为默认\")",
+        "found": true,
+        "text": "设为默认"
+      }
+    }
+  ]
+}

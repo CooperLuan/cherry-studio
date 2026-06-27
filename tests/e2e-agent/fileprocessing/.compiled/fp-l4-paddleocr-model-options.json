@@ -1,0 +1,212 @@
+{
+  "id": "fp-l4-paddleocr-model-options",
+  "title": "PaddleOCR 解析模型选项随 feature 切换",
+  "tier": "light",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/light/FP-L4-paddleocr-model-options.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "button[aria-label=\"设置\"]",
+        "found": true
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.file_processing.title"
+        }
+      },
+      "label": "click-text:文档解析",
+      "ok": true,
+      "resolved": {
+        "selector": "text=文档解析",
+        "found": true,
+        "text": "文档解析"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-image_to_text-paddleocr"
+        }
+      },
+      "label": "click-#fp-item-image_to_text-paddleocr",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-image_to_text-paddleocr",
+        "found": true,
+        "id": "fp-item-image_to_text-paddleocr"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "settings.tool.file_processing.processors.paddleocr.fields.parse_model"
+        }
+      },
+      "label": "click-[aria-label=\"解析模型\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"解析模型\"]",
+        "found": true,
+        "ariaLabel": "解析模型"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "role": "option",
+          "has-text": "PP-OCRv6"
+        }
+      },
+      "label": "visible-[role=\"option\"]:has-text(\"PP-OCRv6\")",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[role=\"option\"]:has-text(\"PP-OCRv6\")",
+        "found": true,
+        "role": "option",
+        "text": "PP-OCRv6"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "role": "option",
+          "has-text": "PP-OCRv5"
+        }
+      },
+      "label": "visible-[role=\"option\"]:has-text(\"PP-OCRv5\")",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[role=\"option\"]:has-text(\"PP-OCRv5\")",
+        "found": true,
+        "role": "option",
+        "text": "PP-OCRv5"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "do": "press",
+        "keys": "Escape"
+      },
+      "label": "press-#nav",
+      "ok": true,
+      "resolved": {
+        "keys": "Escape"
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-document_to_markdown-paddleocr"
+        }
+      },
+      "label": "click-#fp-item-document_to_markdown-paddleocr",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-document_to_markdown-paddleocr",
+        "found": true,
+        "id": "fp-item-document_to_markdown-paddleocr"
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "settings.tool.file_processing.processors.paddleocr.fields.parse_model"
+        }
+      },
+      "label": "click-[aria-label=\"解析模型\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"解析模型\"]",
+        "found": true,
+        "ariaLabel": "解析模型"
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "role": "option",
+          "has-text": "PaddleOCR-VL-1.5"
+        }
+      },
+      "label": "visible-[role=\"option\"]:has-text(\"PaddleOCR-VL-1.5\")",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[role=\"option\"]:has-text(\"PaddleOCR-VL-1.5\")",
+        "found": true,
+        "role": "option",
+        "text": "PaddleOCR-VL-1.5"
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "role": "option",
+          "has-text": "PP-StructureV3"
+        }
+      },
+      "label": "visible-[role=\"option\"]:has-text(\"PP-StructureV3\")",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[role=\"option\"]:has-text(\"PP-StructureV3\")",
+        "found": true,
+        "role": "option",
+        "text": "PP-StructureV3"
+      }
+    },
+    {
+      "index": 12,
+      "yaml": {
+        "do": "press",
+        "keys": "Escape"
+      },
+      "label": "press-#nav",
+      "ok": true,
+      "resolved": {
+        "keys": "Escape"
+      }
+    }
+  ]
+}

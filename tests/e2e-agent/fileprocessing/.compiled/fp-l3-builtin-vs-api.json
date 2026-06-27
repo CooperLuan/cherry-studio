@@ -1,0 +1,259 @@
+{
+  "id": "fp-l3-builtin-vs-api",
+  "title": "builtin vs api 面板条件渲染",
+  "tier": "light",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/light/FP-L3-builtin-vs-api.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "button[aria-label=\"设置\"]",
+        "found": true
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.file_processing.title"
+        }
+      },
+      "label": "click-text:文档解析",
+      "ok": true,
+      "resolved": {
+        "selector": "text=文档解析",
+        "found": true,
+        "text": "文档解析"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-image_to_text-system"
+        }
+      },
+      "label": "click-#fp-item-image_to_text-system",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-image_to_text-system",
+        "found": true,
+        "id": "fp-item-image_to_text-system"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "settings.tool.file_processing.processors.system.status.available"
+        }
+      },
+      "label": "visible-text:检测到 macOS Live Text / Windows OCR 引擎可用。",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=检测到 macOS Live Text / Windows OCR 引擎可用。",
+        "found": true,
+        "text": "检测到 macOS Live Text / Windows OCR 引擎可用。"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "placeholder-i18n": "settings.tool.file_processing.fields.api_keys_placeholder"
+        }
+      },
+      "label": "hidden-input[placeholder=\"多个密钥可用逗号分隔\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"多个密钥可用逗号分隔\"]",
+        "found": true,
+        "placeholder": "多个密钥可用逗号分隔"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "aria-i18n": "settings.provider.api.key.list.open"
+        }
+      },
+      "label": "hidden-[aria-label=\"打开管理界面\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "css=[aria-label=\"打开管理界面\"]",
+        "found": true,
+        "ariaLabel": "打开管理界面"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-image_to_text-tesseract"
+        }
+      },
+      "label": "click-#fp-item-image_to_text-tesseract",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-image_to_text-tesseract",
+        "found": true,
+        "id": "fp-item-image_to_text-tesseract"
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "settings.tool.file_processing.fields.languages"
+        }
+      },
+      "label": "visible-text:语言",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=语言",
+        "found": true,
+        "text": "语言"
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "placeholder-i18n": "settings.tool.file_processing.fields.api_keys_placeholder"
+        }
+      },
+      "label": "hidden-input[placeholder=\"多个密钥可用逗号分隔\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"多个密钥可用逗号分隔\"]",
+        "found": true,
+        "placeholder": "多个密钥可用逗号分隔"
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-document_to_markdown-mineru"
+        }
+      },
+      "label": "click-#fp-item-document_to_markdown-mineru",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-document_to_markdown-mineru",
+        "found": true,
+        "id": "fp-item-document_to_markdown-mineru"
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "settings.tool.file_processing.fields.api_keys_placeholder"
+        }
+      },
+      "label": "visible-input[placeholder=\"多个密钥可用逗号分隔\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"多个密钥可用逗号分隔\"]",
+        "found": true,
+        "placeholder": "多个密钥可用逗号分隔"
+      }
+    },
+    {
+      "index": 12,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "aria-i18n": "settings.provider.api.key.list.open"
+        }
+      },
+      "label": "visible-[aria-label=\"打开管理界面\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=[aria-label=\"打开管理界面\"]",
+        "found": true,
+        "ariaLabel": "打开管理界面"
+      }
+    },
+    {
+      "index": 13,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "settings.provider.api_host"
+        }
+      },
+      "label": "visible-input[placeholder=\"API 地址\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"API 地址\"]",
+        "found": true,
+        "placeholder": "API 地址"
+      }
+    },
+    {
+      "index": 14,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "aria-i18n": "settings.tool.file_processing.processors.paddleocr.fields.parse_model"
+        }
+      },
+      "label": "hidden-[aria-label=\"解析模型\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "css=[aria-label=\"解析模型\"]",
+        "found": true,
+        "ariaLabel": "解析模型"
+      }
+    }
+  ]
+}

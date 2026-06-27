@@ -1,0 +1,225 @@
+{
+  "id": "fp-m2-apikey-dialog",
+  "title": "API key 列表对话框 + 空值校验",
+  "tier": "medium",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/medium/FP-M2-apikey-dialog.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "button[aria-label=\"设置\"]",
+        "found": true
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.file_processing.title"
+        }
+      },
+      "label": "click-text:文档解析",
+      "ok": true,
+      "resolved": {
+        "selector": "text=文档解析",
+        "found": true,
+        "text": "文档解析"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "id": "fp-item-document_to_markdown-mineru"
+        }
+      },
+      "label": "click-#fp-item-document_to_markdown-mineru",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#fp-item-document_to_markdown-mineru",
+        "found": true,
+        "id": "fp-item-document_to_markdown-mineru"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "settings.provider.api.key.list.open"
+        }
+      },
+      "label": "click-[aria-label=\"打开管理界面\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"打开管理界面\"]",
+        "found": true,
+        "ariaLabel": "打开管理界面"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "settings.provider.api.key.list.title"
+        }
+      },
+      "label": "visible-text:API 密钥管理",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=API 密钥管理",
+        "found": true,
+        "text": "API 密钥管理"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "common.add"
+        }
+      },
+      "label": "click-button:has-text(\"添加\")",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"添加\")",
+        "found": true,
+        "text": "添加"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "settings.provider.api.key.new_key.placeholder"
+        }
+      },
+      "label": "visible-input[placeholder=\"输入 API 密钥\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"输入 API 密钥\"]",
+        "found": true,
+        "placeholder": "输入 API 密钥"
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "check": "disabled",
+        "by": {
+          "i18n": "common.add"
+        }
+      },
+      "label": "disabled-button:has-text(\"添加\")",
+      "ok": true,
+      "actual": {
+        "enabled": false
+      },
+      "resolved": {
+        "selector": "button:has-text(\"添加\")",
+        "found": true,
+        "text": "添加"
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "intent": "空 key 保存 → 校验失败、留编辑态",
+        "do": "click",
+        "by": {
+          "aria-i18n": "common.save"
+        }
+      },
+      "label": "click-[aria-label=\"保存\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"保存\"]",
+        "found": true,
+        "ariaLabel": "保存"
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "settings.provider.api.key.new_key.placeholder"
+        }
+      },
+      "label": "visible-input[placeholder=\"输入 API 密钥\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"输入 API 密钥\"]",
+        "found": true,
+        "placeholder": "输入 API 密钥"
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "common.cancel"
+        }
+      },
+      "label": "click-[aria-label=\"取消\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"取消\"]",
+        "found": true,
+        "ariaLabel": "取消"
+      }
+    },
+    {
+      "index": 12,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "placeholder-i18n": "settings.provider.api.key.new_key.placeholder"
+        }
+      },
+      "label": "hidden-input[placeholder=\"输入 API 密钥\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "css=input[placeholder=\"输入 API 密钥\"]",
+        "found": true,
+        "placeholder": "输入 API 密钥"
+      }
+    },
+    {
+      "index": 13,
+      "yaml": {},
+      "label": "undefined-#nav",
+      "ok": true,
+      "resolved": {
+        "value": "Escape"
+      }
+    }
+  ]
+}
