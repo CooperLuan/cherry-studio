@@ -1,7 +1,7 @@
 # Web Search E2E — light/medium 规格（SoT · 已 live 校准）
 
 > 域 spec，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**（无 v1/v2 共存，preference 走 SQLite）。
-> **状态**：已 live 校准并跑通。**首跑 9 case：L1-L4 + M1-M4 全 PASS；M5 首版（disabled gate）FAIL→已转向 enable/disable toggle**（golden 活动模型从 `Qwen|CherryAI` 漂到 `DeepSeek V4 Flash|CherryInExpress`、支持 web search，disabled 前提作废，见 WS-M5）。锚点已对实测对齐，待测试机复跑 M5 toggle 确认。`.compiled/` 首跑已产出（M5 toggle 版待重跑回填）。
+> **状态**：已 live 校准并**全 9 case PASS**（`08c005190` 复跑：L1-L4 + M1-M5 全绿）。M5 首版（disabled gate）首跑 FAIL→**已转向 enable/disable toggle 并复跑确认 PASS**（golden 活动模型从 `Qwen|CherryAI` 漂到 `DeepSeek V4 Flash|CherryInExpress`、支持 web search，disabled 前提作废，见 WS-M5）。锚点全部对实测对齐。`.compiled/` 已在测试机产出 9 个（待 vet 后入 repo）。
 
 ## 0. 架构与锚点
 

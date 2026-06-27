@@ -136,6 +136,6 @@ steps:
 - **`.compiled` 截图基线**用途：仅诊断附件，还是参与视觉回归（v1 不做视觉 gate）。
 - 现状：
   - **knowledge**：11 个 light/medium case 已 live 验证并编码（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。
-  - **websearch**：9 个 light/medium case 已 live 校准并编码并跑通（light L1-L4 · medium M1-M5；首跑 8 PASS，M5 首版 disabled-gate 因 golden 活动模型支持 web search 而 FAIL→已转向 enable/disable toggle，待复跑；删除 CRUD/disabled-state/真实搜索 推 full M2b/M5c/M6）。见 [`websearch/light-medium.md`](websearch/light-medium.md)。
+  - **websearch**：9 个 light/medium case 已 live 校准并编码，**全 9 PASS**（light L1-L4 · medium M1-M5；M5 首版 disabled-gate 因 golden 活动模型支持 web search 而 FAIL→转向 enable/disable toggle 并复跑确认；删除 CRUD/disabled-state/真实搜索 推 full M2b/M5c/M6）。见 [`websearch/light-medium.md`](websearch/light-medium.md)。
   - **fileprocessing（文档解析）**：8 个 light/medium case 已 live 校准并编码（light L1-L4 · medium M1-M4；设置页配置面，真实转换 renderer 不可见→推 full；M2 弹窗快照不重渲染→只测 add+空值拒绝+cancel，真实 CRUD 推 full M2b）。见 [`fileprocessing/light-medium.md`](fileprocessing/light-medium.md)。
   - `.compiled/` 待测试机首跑 compile 后回填（各域皆是）。
