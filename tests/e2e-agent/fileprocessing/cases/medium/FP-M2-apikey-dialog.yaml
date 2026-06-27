@@ -1,0 +1,48 @@
+# API key list dialog: open + add row + empty-value rejection + cancel (net-zero).
+# Popup binds a snapshot of apiKeys (useMemo[,apiKeys]) → add/delete persist but the list
+# does NOT live re-render → assert edit-row visibility, NOT item count; no delete-confirm
+# (destroys golden keys). Real add-persist/delete CRUD → full (FP-M2b).
+# Spec: ../../light-medium.md §2 FP-M2
+id: fp-m2-apikey-dialog
+title: API key 列表对话框 + 空值校验
+tier: medium
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── 进 mineru 面板 → 打开 API 密钥管理对话框 ──
+  - do: click
+    by: { id: fp-item-document_to_markdown-mineru }
+  - do: click
+    by: { aria-i18n: settings.provider.api.key.list.open }
+  - check: visible
+    by: { i18n: settings.provider.api.key.list.title }
+
+  # ── 新增一行 → 编辑 input 出现 + Add 按钮禁用 ──
+  - do: click
+    by: { i18n: common.add }
+  - check: visible
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }
+  - check: disabled
+    by: { i18n: common.add }
+
+  # ── 空值保存被拒 → 编辑 input 仍在（未提交）──
+  - intent: 空 key 保存 → 校验失败、留编辑态
+    do: click
+    by: { aria-i18n: common.save }
+  - check: visible
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }
+
+  # ── 取消 → 移除 pending 行（净零，不动 golden 既有 key）──
+  - do: click
+    by: { aria-i18n: common.cancel }
+  - check: hidden
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }

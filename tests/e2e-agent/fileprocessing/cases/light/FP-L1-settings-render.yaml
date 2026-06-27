@@ -1,0 +1,53 @@
+# Settings page reachable + both feature sections + platform filter (ovocr hidden on
+# macOS) via locale-free menu-item ids (fp-item-<feature>-<id>).
+# Spec: ../../light-medium.md §2 FP-L1
+id: fp-l1-settings-render
+title: 打开文件处理设置页 + 渲染/平台过滤校验
+tier: light
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - intent: 设置页左列点「文档解析」进入文件处理设置
+    do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── 页标题 + 两 feature section ──
+  - check: visible
+    by: { i18n: settings.tool.file_processing.title }
+  - check: visible
+    by: { i18n: settings.tool.file_processing.features.image_to_text.title }
+  - check: visible
+    by: { i18n: settings.tool.file_processing.features.document_to_markdown.title }
+
+  # ── 文档段菜单项（id 唯一、locale 无关）──
+  - check: visible
+    by: { id: fp-item-document_to_markdown-mineru }
+  - check: visible
+    by: { id: fp-item-document_to_markdown-doc2x }
+  - check: visible
+    by: { id: fp-item-document_to_markdown-paddleocr }
+  - check: visible
+    by: { id: fp-item-document_to_markdown-mistral }
+  - check: visible
+    by: { id: fp-item-document_to_markdown-open-mineru }
+
+  # ── OCR 段菜单项 ──
+  - check: visible
+    by: { id: fp-item-image_to_text-system }
+  - check: visible
+    by: { id: fp-item-image_to_text-paddleocr }
+  - check: visible
+    by: { id: fp-item-image_to_text-tesseract }
+  - check: visible
+    by: { id: fp-item-image_to_text-mistral }
+
+  # ── 平台过滤：macOS 上 ovocr（Win+Intel 限定）被 list_available_processors 过滤 ──
+  - intent: ovocr 仅 Win+Intel，macOS 隐藏
+    check: hidden
+    by: { id: fp-item-image_to_text-ovocr }

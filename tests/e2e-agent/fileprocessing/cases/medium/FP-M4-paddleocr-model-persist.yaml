@@ -1,0 +1,32 @@
+# PaddleOCR parse-model selection persists across navigation (preference write via
+# onSetCapabilityField). Select PP-StructureV3, navigate away/back, value retained.
+# Spec: ../../light-medium.md §2 FP-M4
+id: fp-m4-paddleocr-model-persist
+title: PaddleOCR 解析模型持久化
+tier: medium
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── 文档 paddleocr → 解析模型选 PP-StructureV3 ──
+  - do: click
+    by: { id: fp-item-document_to_markdown-paddleocr }
+  - do: select
+    by: { aria-i18n: settings.tool.file_processing.processors.paddleocr.fields.parse_model }
+    option: PP-StructureV3
+
+  # ── 切走（mineru）再切回 → 值仍是 PP-StructureV3（持久化）──
+  - do: click
+    by: { id: fp-item-document_to_markdown-mineru }
+  - do: click
+    by: { id: fp-item-document_to_markdown-paddleocr }
+  - check: visible
+    by: { aria-i18n: settings.tool.file_processing.processors.paddleocr.fields.parse_model, has-text: "PP-StructureV3" }

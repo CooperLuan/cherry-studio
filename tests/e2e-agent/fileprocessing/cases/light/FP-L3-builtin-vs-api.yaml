@@ -1,0 +1,47 @@
+# Conditional render: builtin (system/tesseract) has NO api settings; api (mineru) shows
+# api key + key-list button + api host; only paddleocr shows the parse-model select.
+# Spec: ../../light-medium.md §2 FP-L3
+id: fp-l3-builtin-vs-api
+title: builtin vs api 面板条件渲染
+tier: light
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── system（builtin）：状态块；无 api key / 无 list 按钮 ──
+  - do: click
+    by: { id: fp-item-image_to_text-system }
+  - check: visible
+    by: { i18n: settings.tool.file_processing.processors.system.status.available }
+  - check: hidden
+    by: { placeholder-i18n: settings.tool.file_processing.fields.api_keys_placeholder }
+  - check: hidden
+    by: { aria-i18n: settings.provider.api.key.list.open }
+
+  # ── tesseract（builtin）：语言包；无 api key ──
+  - do: click
+    by: { id: fp-item-image_to_text-tesseract }
+  - check: visible
+    by: { i18n: settings.tool.file_processing.fields.languages }
+  - check: hidden
+    by: { placeholder-i18n: settings.tool.file_processing.fields.api_keys_placeholder }
+
+  # ── mineru（api）：api key + list 按钮 + api 地址；非 paddleocr 无解析模型 ──
+  - do: click
+    by: { id: fp-item-document_to_markdown-mineru }
+  - check: visible
+    by: { placeholder-i18n: settings.tool.file_processing.fields.api_keys_placeholder }
+  - check: visible
+    by: { aria-i18n: settings.provider.api.key.list.open }
+  - check: visible
+    by: { placeholder-i18n: settings.provider.api_host }
+  - check: hidden
+    by: { aria-i18n: settings.tool.file_processing.processors.paddleocr.fields.parse_model }

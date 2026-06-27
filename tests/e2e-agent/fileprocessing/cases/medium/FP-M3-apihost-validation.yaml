@@ -1,0 +1,33 @@
+# API host offline validation: an invalid host on blur raises the warning toast
+# (errors.invalid_api_host). mistral has an api-host field on both features.
+# Toast is transient → check promptly. No success signal on valid → invalid path only.
+# Spec: ../../light-medium.md §2 FP-M3
+id: fp-m3-apihost-validation
+title: API 地址非法校验
+tier: medium
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── 进 mistral 面板（有 API 地址字段）──
+  - do: click
+    by: { id: fp-item-image_to_text-mistral }
+
+  # ── 填非法地址（type 替换内容）→ blur（Tab）→ 警告 toast ──
+  - intent: API 地址填非法值（type 替换既有 host）
+    do: type
+    by: { placeholder-i18n: settings.provider.api_host }
+    text: "not a url"
+  - intent: blur 触发校验
+    do: press
+    keys: Tab
+  - check: visible
+    by: { i18n: settings.tool.file_processing.errors.invalid_api_host }

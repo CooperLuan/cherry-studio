@@ -1,0 +1,44 @@
+# Set-as-default toggles button→badge (no toast); menu badge migrates to doc2x.
+# Self-resets the doc default back to mineru at the end (golden idempotency).
+# Spec: ../../light-medium.md §2 FP-M1
+id: fp-m1-set-default
+title: 设为默认切换（按钮↔Badge）
+tier: medium
+domain: fileprocessing
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.file_processing.title }
+
+  # ── doc2x 非默认：面板显「设为默认」按钮、无默认 Badge ──
+  - do: click
+    by: { id: fp-item-document_to_markdown-doc2x }
+  - check: hidden
+    by: { testid: fp-panel-default-badge }
+  - check: visible
+    by: { i18n: settings.tool.file_processing.actions.set_as_default }
+  - check: enabled
+    by: { i18n: settings.tool.file_processing.actions.set_as_default }
+
+  # ── 点设为默认 → 面板默认 Badge + 左列默认 Badge 迁到 doc2x（无 toast）──
+  - do: click
+    by: { i18n: settings.tool.file_processing.actions.set_as_default }
+  - check: visible
+    by: { testid: fp-panel-default-badge, attr: { data-processor-id: doc2x } }
+  - check: visible
+    by: { testid: fp-menu-default-badge, attr: { data-feature: document_to_markdown, data-processor-id: doc2x } }
+
+  # ── 复位文档默认 = mineru（保持 golden 幂等）──
+  - intent: 复位 golden 默认文档引擎为 mineru
+    do: click
+    by: { id: fp-item-document_to_markdown-mineru }
+  - do: click
+    by: { i18n: settings.tool.file_processing.actions.set_as_default }
+  - check: visible
+    by: { testid: fp-panel-default-badge, attr: { data-processor-id: mineru } }
