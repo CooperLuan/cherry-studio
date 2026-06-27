@@ -1,0 +1,465 @@
+{
+  "id": "ws-l4-switch-default-provider",
+  "title": "切换默认搜索 provider → Badge 迁移",
+  "tier": "light",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/light/L4-switch-default-provider.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"设置\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": "设置",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 7,
+          "y": 952,
+          "w": 36,
+          "h": 36
+        },
+        "attrs": {
+          "type": "button",
+          "aria-label": "设置",
+          "class": "flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
+          "data-insp-path": "src/renderer/components/layout/ShellTabBarActions.tsx:85:11:button"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.websearch.title"
+        }
+      },
+      "label": "click-text:网络搜索",
+      "ok": true,
+      "resolved": {
+        "selector": "interactive-text=网络搜索",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "网络搜索",
+        "placeholder": null,
+        "rect": {
+          "x": 61,
+          "y": 280,
+          "w": 214,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "data-slot": "menu-item",
+          "class": "group relative flex w-full items-center gap-2.5 border transition-all duration-150 outline-none select-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 hover:bg-accent data-[active=true]:bg-accent data-[active=true]:border-transparent py-1.5 h-8 rounded-[10px] border-transparent px-2.5 font-normal text-foreground text-sm hover:!bg-muted data-[active=true]:!border-transparent data-[active=true]:!bg-muted data-[active=true]:!font-medium data-[active=true]:!text-foreground [&_svg]:size-4 [&_svg]:text-foreground",
+          "data-insp-path": "packages/ui/src/components/composites/menu-list/menu-item.tsx:84:5:Comp"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "select",
+        "by": {
+          "id": "web-search-default-keywords-provider"
+        },
+        "option": "tavily"
+      },
+      "label": "select-#web-search-default-keywords-provider",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#web-search-default-keywords-provider",
+        "found": true,
+        "tag": "BUTTON",
+        "id": "web-search-default-keywords-provider",
+        "role": "combobox",
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "select-trigger",
+        "dataActive": null,
+        "disabled": null,
+        "text": "ExaMCP",
+        "placeholder": null,
+        "rect": {
+          "x": 1151,
+          "y": 106,
+          "w": 224,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "role": "combobox",
+          "aria-controls": "radix-_r_1ov_",
+          "aria-expanded": "false",
+          "aria-autocomplete": "none",
+          "dir": "ltr",
+          "data-state": "closed",
+          "data-slot": "select-trigger",
+          "data-size": "sm",
+          "class": "inline-flex items-center justify-between rounded-md border-1 transition-colors outline-none font-normal bg-transparent dark:bg-input/30 text-foreground border-border aria-expanded:border-primary aria-expanded:ring-3 aria-expanded:ring-primary/20 px-3 gap-2 data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground whitespace-nowrap *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 h-8 w-56 text-sm",
+          "id": "web-search-default-keywords-provider",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/BasicSettings.tsx:109:13:SelectTrigger"
+        },
+        "selectedOption": "tavily",
+        "selectedText": "Tavily",
+        "optionElement": {
+          "selector": "role=option[name=Tavily]",
+          "found": true,
+          "tag": "DIV",
+          "id": null,
+          "role": "option",
+          "ariaLabel": null,
+          "testid": null,
+          "dataProviderId": null,
+          "dataSlot": "select-item",
+          "dataActive": null,
+          "disabled": null,
+          "text": "Tavily",
+          "placeholder": null,
+          "rect": {
+            "x": 1155,
+            "y": 179,
+            "w": 216,
+            "h": 32
+          },
+          "attrs": {
+            "role": "option",
+            "aria-labelledby": "radix-_r_1pn_",
+            "aria-selected": "false",
+            "data-state": "unchecked",
+            "tabindex": "-1",
+            "data-slot": "select-item",
+            "class": "focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+            "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/BasicSettings.tsx:114:17:SelectItem",
+            "data-radix-collection-item": ""
+          }
+        },
+        "optionsBefore": [
+          {
+            "text": "Zhipu",
+            "value": null
+          },
+          {
+            "text": "Tavily",
+            "value": null
+          },
+          {
+            "text": "Searxng",
+            "value": null
+          },
+          {
+            "text": "Exa",
+            "value": null
+          },
+          {
+            "text": "ExaMCP",
+            "value": null
+          },
+          {
+            "text": "Bocha",
+            "value": null
+          },
+          {
+            "text": "Querit",
+            "value": null
+          },
+          {
+            "text": "Jina",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "ws-default-badge",
+          "attr": {
+            "data-provider-id": "tavily"
+          }
+        }
+      },
+      "label": "visible-[data-testid=ws-default-badge]",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[data-testid=\"ws-default-badge\"][data-provider-id=\"tavily\"]",
+        "found": true,
+        "tag": "SPAN",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": "ws-default-badge",
+        "dataProviderId": "tavily",
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "默认",
+        "placeholder": null,
+        "rect": {
+          "x": 468,
+          "y": 213,
+          "w": 46,
+          "h": 22
+        },
+        "attrs": {
+          "data-testid": "ws-default-badge",
+          "data-provider-id": "tavily",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/index.tsx:95:29:span"
+        }
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "testid": "ws-default-badge",
+          "attr": {
+            "data-provider-id": "exa-mcp"
+          }
+        }
+      },
+      "label": "hidden-[data-testid=ws-default-badge]",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[data-testid=\"ws-default-badge\"][data-provider-id=\"exa-mcp\"]"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "intent": "fetch 默认 jina 不受 keywords 切换影响（独立）",
+        "check": "visible",
+        "by": {
+          "testid": "ws-default-badge",
+          "attr": {
+            "data-provider-id": "jina"
+          }
+        }
+      },
+      "label": "visible-[data-testid=ws-default-badge]",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[data-testid=\"ws-default-badge\"][data-provider-id=\"jina\"]",
+        "found": true,
+        "tag": "SPAN",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": "ws-default-badge",
+        "dataProviderId": "jina",
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "默认",
+        "placeholder": null,
+        "rect": {
+          "x": 468,
+          "y": 544,
+          "w": 46,
+          "h": 22
+        },
+        "attrs": {
+          "data-testid": "ws-default-badge",
+          "data-provider-id": "jina",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/index.tsx:95:29:span"
+        }
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "do": "select",
+        "by": {
+          "id": "web-search-default-keywords-provider"
+        },
+        "option": "exa-mcp"
+      },
+      "label": "select-#web-search-default-keywords-provider",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#web-search-default-keywords-provider",
+        "found": true,
+        "tag": "BUTTON",
+        "id": "web-search-default-keywords-provider",
+        "role": "combobox",
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "select-trigger",
+        "dataActive": null,
+        "disabled": null,
+        "text": "Tavily",
+        "placeholder": null,
+        "rect": {
+          "x": 1151,
+          "y": 106,
+          "w": 224,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "role": "combobox",
+          "aria-controls": "radix-_r_1ov_",
+          "aria-expanded": "false",
+          "aria-autocomplete": "none",
+          "dir": "ltr",
+          "data-state": "closed",
+          "data-slot": "select-trigger",
+          "data-size": "sm",
+          "class": "inline-flex items-center justify-between rounded-md border-1 transition-colors outline-none font-normal bg-transparent dark:bg-input/30 text-foreground border-border aria-expanded:border-primary aria-expanded:ring-3 aria-expanded:ring-primary/20 px-3 gap-2 data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground whitespace-nowrap *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 h-8 w-56 text-sm",
+          "id": "web-search-default-keywords-provider",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/BasicSettings.tsx:109:13:SelectTrigger"
+        },
+        "selectedOption": "exa-mcp",
+        "selectedText": "ExaMCP",
+        "optionElement": {
+          "selector": "role=option[name=ExaMCP]",
+          "found": true,
+          "tag": "DIV",
+          "id": null,
+          "role": "option",
+          "ariaLabel": null,
+          "testid": null,
+          "dataProviderId": null,
+          "dataSlot": "select-item",
+          "dataActive": null,
+          "disabled": null,
+          "text": "ExaMCP",
+          "placeholder": null,
+          "rect": {
+            "x": 1155,
+            "y": 275,
+            "w": 216,
+            "h": 32
+          },
+          "attrs": {
+            "role": "option",
+            "aria-labelledby": "radix-_r_1qo_",
+            "aria-selected": "false",
+            "data-state": "unchecked",
+            "tabindex": "-1",
+            "data-slot": "select-item",
+            "class": "focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+            "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/BasicSettings.tsx:114:17:SelectItem",
+            "data-radix-collection-item": ""
+          }
+        },
+        "optionsBefore": [
+          {
+            "text": "Zhipu",
+            "value": null
+          },
+          {
+            "text": "Tavily",
+            "value": null
+          },
+          {
+            "text": "Searxng",
+            "value": null
+          },
+          {
+            "text": "Exa",
+            "value": null
+          },
+          {
+            "text": "ExaMCP",
+            "value": null
+          },
+          {
+            "text": "Bocha",
+            "value": null
+          },
+          {
+            "text": "Querit",
+            "value": null
+          },
+          {
+            "text": "Jina",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "ws-default-badge",
+          "attr": {
+            "data-provider-id": "exa-mcp"
+          }
+        }
+      },
+      "label": "visible-[data-testid=ws-default-badge]",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[data-testid=\"ws-default-badge\"][data-provider-id=\"exa-mcp\"]",
+        "found": true,
+        "tag": "SPAN",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": "ws-default-badge",
+        "dataProviderId": "exa-mcp",
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "默认",
+        "placeholder": null,
+        "rect": {
+          "x": 468,
+          "y": 321,
+          "w": 46,
+          "h": 22
+        },
+        "attrs": {
+          "data-testid": "ws-default-badge",
+          "data-provider-id": "exa-mcp",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/index.tsx:95:29:span"
+        }
+      }
+    }
+  ]
+}

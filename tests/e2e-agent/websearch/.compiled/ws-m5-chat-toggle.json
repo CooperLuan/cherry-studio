@@ -1,0 +1,304 @@
+{
+  "id": "ws-m5-chat-toggle",
+  "title": "聊天 web search 启用/关闭 toggle（当前模型支持）",
+  "tier": "medium",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/medium/M5-chat-toggle.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "assistants"
+      },
+      "label": "goto-#assistants",
+      "ok": true,
+      "resolved": {
+        "selector": "top-tab:assistant",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "💬💬E2E_Test_Assistant(no_vision)",
+        "placeholder": null,
+        "rect": {
+          "x": 90,
+          "y": 7,
+          "w": 140,
+          "h": 30
+        },
+        "attrs": {
+          "data-insp-path": "src/renderer/components/layout/AppShellTabBar.tsx:168:5:button",
+          "data-tab-id": "home",
+          "type": "button",
+          "class": "nodrag group relative flex h-[30px] min-w-[40px] max-w-[160px] flex-1 items-center gap-1.5 rounded-[10px] transition-all duration-150 [-webkit-app-region:no-drag] px-2 cursor-default text-muted-foreground hover:bg-white hover:text-sidebar-foreground dark:hover:bg-white/10 dark:hover:text-sidebar-foreground",
+          "style": "transform: translateX(0px); transition: transform 200ms; z-index: auto; opacity: 1;"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "has-attr": "data-active",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "hidden-[aria-label=网络搜索]",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"网络搜索\"]"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "common.add"
+        }
+      },
+      "label": "click-[aria-label=添加]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"添加\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": "radix-_r_3jo_",
+        "role": null,
+        "ariaLabel": "添加",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "dropdown-menu-trigger",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 488,
+          "y": 491,
+          "w": 30,
+          "h": 30
+        },
+        "attrs": {
+          "type": "button",
+          "class": "flex size-[30px] shrink-0 items-center justify-center rounded-full text-foreground-secondary transition-colors hover:bg-accent hover:text-foreground",
+          "aria-label": "添加",
+          "data-insp-path": "src/renderer/components/composer/ComposerToolRuntime.tsx:449:9:button",
+          "id": "radix-_r_3jo_",
+          "aria-haspopup": "menu",
+          "aria-expanded": "false",
+          "data-state": "closed",
+          "data-slot": "dropdown-menu-trigger"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "check": "enabled",
+        "by": {
+          "role": "menuitem",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "enabled-[aria-label=网络搜索]",
+      "actual": {
+        "enabled": true,
+        "ariaDisabled": null,
+        "dataDisabled": null,
+        "interpretedEnabled": true
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "role=menuitem[name=网络搜索]",
+        "found": true,
+        "tag": "DIV",
+        "id": null,
+        "role": "menuitem",
+        "ariaLabel": "网络搜索",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "dropdown-menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "网络搜索",
+        "placeholder": null,
+        "rect": {
+          "x": 493,
+          "y": 386,
+          "w": 198,
+          "h": 32
+        },
+        "attrs": {
+          "role": "menuitem",
+          "data-slot": "dropdown-menu-item",
+          "data-variant": "default",
+          "class": "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",
+          "aria-label": "网络搜索",
+          "data-insp-path": "src/renderer/components/composer/ComposerToolRuntime.tsx:541:13:DropdownMenuItem",
+          "tabindex": "-1",
+          "data-orientation": "vertical",
+          "data-radix-collection-item": ""
+        }
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "menuitem",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "click-[aria-label=网络搜索]",
+      "ok": true,
+      "resolved": {
+        "selector": "role=menuitem[name=网络搜索]",
+        "found": true,
+        "tag": "DIV",
+        "id": null,
+        "role": "menuitem",
+        "ariaLabel": "网络搜索",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "dropdown-menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "网络搜索",
+        "placeholder": null,
+        "rect": {
+          "x": 493,
+          "y": 386,
+          "w": 198,
+          "h": 32
+        },
+        "attrs": {
+          "role": "menuitem",
+          "data-slot": "dropdown-menu-item",
+          "data-variant": "default",
+          "class": "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",
+          "aria-label": "网络搜索",
+          "data-insp-path": "src/renderer/components/composer/ComposerToolRuntime.tsx:541:13:DropdownMenuItem",
+          "tabindex": "-1",
+          "data-orientation": "vertical",
+          "data-radix-collection-item": ""
+        }
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "has-attr": "data-active",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "visible-[aria-label=网络搜索]",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"网络搜索\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": "网络搜索",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": "",
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 524,
+          "y": 492,
+          "w": 32,
+          "h": 28
+        },
+        "attrs": {
+          "type": "button",
+          "class": "flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2 font-medium text-foreground-secondary text-xs transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 data-[active=true]:bg-accent data-[active=true]:text-foreground [&_svg]:size-4",
+          "data-active": "true",
+          "aria-label": "网络搜索",
+          "data-insp-path": "src/renderer/components/composer/ComposerToolRuntime.tsx:406:9:button"
+        }
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "has-attr": "data-active",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "click-[aria-label=网络搜索]",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"网络搜索\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": "网络搜索",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": "",
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 524,
+          "y": 492,
+          "w": 32,
+          "h": 28
+        },
+        "attrs": {
+          "type": "button",
+          "class": "flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2 font-medium text-foreground-secondary text-xs transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 data-[active=true]:bg-accent data-[active=true]:text-foreground [&_svg]:size-4",
+          "data-active": "true",
+          "aria-label": "网络搜索",
+          "data-insp-path": "src/renderer/components/composer/ComposerToolRuntime.tsx:406:9:button"
+        }
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "has-attr": "data-active",
+          "aria-i18n": "chat.input.web_search.label"
+        }
+      },
+      "label": "hidden-[aria-label=网络搜索]",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"网络搜索\"]"
+      }
+    }
+  ]
+}

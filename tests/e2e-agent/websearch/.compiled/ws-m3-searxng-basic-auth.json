@@ -1,0 +1,334 @@
+{
+  "id": "ws-m3-searxng-basic-auth",
+  "title": "searxng basic auth 条件显隐",
+  "tier": "medium",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/medium/M3-searxng-basic-auth.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"设置\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": "设置",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 7,
+          "y": 952,
+          "w": 36,
+          "h": 36
+        },
+        "attrs": {
+          "type": "button",
+          "aria-label": "设置",
+          "class": "flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
+          "data-insp-path": "src/renderer/components/layout/ShellTabBarActions.tsx:85:11:button"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.websearch.title"
+        }
+      },
+      "label": "click-text:网络搜索",
+      "ok": true,
+      "resolved": {
+        "selector": "interactive-text=网络搜索",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "网络搜索",
+        "placeholder": null,
+        "rect": {
+          "x": 61,
+          "y": 280,
+          "w": 214,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "data-slot": "menu-item",
+          "class": "group relative flex w-full items-center gap-2.5 border transition-all duration-150 outline-none select-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 hover:bg-accent data-[active=true]:bg-accent data-[active=true]:border-transparent py-1.5 h-8 rounded-[10px] border-transparent px-2.5 font-normal text-foreground text-sm hover:!bg-muted data-[active=true]:!border-transparent data-[active=true]:!bg-muted data-[active=true]:!font-medium data-[active=true]:!text-foreground [&_svg]:size-4 [&_svg]:text-foreground",
+          "data-insp-path": "packages/ui/src/components/composites/menu-list/menu-item.tsx:84:5:Comp"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "has-attr": "data-slot=menu-item",
+          "has-text": "Searxng"
+        }
+      },
+      "label": "click-data-slot=menu-item  text:Searxng",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[data-slot=\"menu-item\"] hasText=Searxng",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "Searxng",
+        "placeholder": null,
+        "rect": {
+          "x": 311,
+          "y": 244,
+          "w": 214,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "data-slot": "menu-item",
+          "class": "group relative flex w-full items-center gap-2.5 border transition-all duration-150 outline-none select-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 hover:bg-accent data-[active=true]:bg-accent data-[active=true]:border-transparent py-1.5 h-8 rounded-[10px] border-transparent px-2.5 font-normal text-foreground text-sm hover:!bg-muted data-[active=true]:!border-transparent data-[active=true]:!bg-muted data-[active=true]:!font-medium data-[active=true]:!text-foreground [&_svg]:size-4 [&_svg]:text-foreground",
+          "data-insp-path": "packages/ui/src/components/composites/menu-list/menu-item.tsx:84:5:Comp"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "type",
+        "by": {
+          "id": "websearch-basic-auth-username"
+        },
+        "text": ""
+      },
+      "label": "type-#websearch-basic-auth-username",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-username",
+        "found": true,
+        "tag": "INPUT",
+        "id": "websearch-basic-auth-username",
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "input",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": "留空以禁用",
+        "value": "",
+        "rect": {
+          "x": 607,
+          "y": 299,
+          "w": 768,
+          "h": 36
+        },
+        "attrs": {
+          "data-slot": "input",
+          "class": "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+          "id": "websearch-basic-auth-username",
+          "placeholder": "留空以禁用",
+          "data-insp-path": "packages/ui/src/components/primitives/input.tsx:8:5:input",
+          "value": "",
+          "style": ""
+        }
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "id": "websearch-basic-auth-password"
+        }
+      },
+      "label": "hidden-#websearch-basic-auth-password",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-password"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "do": "type",
+        "by": {
+          "id": "websearch-basic-auth-username"
+        },
+        "text": "e2e-user"
+      },
+      "label": "type-#websearch-basic-auth-username",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-username",
+        "found": true,
+        "tag": "INPUT",
+        "id": "websearch-basic-auth-username",
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "input",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": "留空以禁用",
+        "value": "",
+        "rect": {
+          "x": 607,
+          "y": 299,
+          "w": 768,
+          "h": 36
+        },
+        "attrs": {
+          "data-slot": "input",
+          "class": "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+          "id": "websearch-basic-auth-username",
+          "placeholder": "留空以禁用",
+          "data-insp-path": "packages/ui/src/components/primitives/input.tsx:8:5:input",
+          "value": "",
+          "style": ""
+        }
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "id": "websearch-basic-auth-password"
+        }
+      },
+      "label": "visible-#websearch-basic-auth-password",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-password",
+        "found": true,
+        "tag": "INPUT",
+        "id": "websearch-basic-auth-password",
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "input",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": "输入密码",
+        "value": "",
+        "rect": {
+          "x": 607,
+          "y": 373,
+          "w": 768,
+          "h": 36
+        },
+        "attrs": {
+          "data-slot": "input",
+          "class": "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+          "id": "websearch-basic-auth-password",
+          "placeholder": "输入密码",
+          "data-insp-path": "packages/ui/src/components/primitives/input.tsx:8:5:input",
+          "type": "password",
+          "value": "",
+          "style": ""
+        }
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "intent": "连续 Backspace 清空 username（受控 input，禁用 fill \"\"）",
+        "do": "type",
+        "by": {
+          "id": "websearch-basic-auth-username"
+        },
+        "text": ""
+      },
+      "label": "type-#websearch-basic-auth-username",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-username",
+        "found": true,
+        "tag": "INPUT",
+        "id": "websearch-basic-auth-username",
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "input",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": "留空以禁用",
+        "value": "e2e-user",
+        "rect": {
+          "x": 607,
+          "y": 299,
+          "w": 768,
+          "h": 36
+        },
+        "attrs": {
+          "data-slot": "input",
+          "class": "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+          "id": "websearch-basic-auth-username",
+          "placeholder": "留空以禁用",
+          "data-insp-path": "packages/ui/src/components/primitives/input.tsx:8:5:input",
+          "value": "e2e-user",
+          "style": ""
+        }
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "id": "websearch-basic-auth-password"
+        }
+      },
+      "label": "hidden-#websearch-basic-auth-password",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "css=#websearch-basic-auth-password"
+      }
+    }
+  ]
+}

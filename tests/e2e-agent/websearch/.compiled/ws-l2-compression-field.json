@@ -1,0 +1,347 @@
+{
+  "id": "ws-l2-compression-field",
+  "title": "compression 截断方式 → cutoff 输入条件显隐",
+  "tier": "light",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/light/L2-compression-field.yaml",
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 1,
+      "yaml": {
+        "do": "goto",
+        "nav": "settings"
+      },
+      "label": "goto-#settings",
+      "ok": true,
+      "resolved": {
+        "selector": "css=[aria-label=\"设置\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": "设置",
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": null,
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": null,
+        "rect": {
+          "x": 7,
+          "y": 952,
+          "w": 36,
+          "h": 36
+        },
+        "attrs": {
+          "type": "button",
+          "aria-label": "设置",
+          "class": "flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground",
+          "data-insp-path": "src/renderer/components/layout/ShellTabBarActions.tsx:85:11:button"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "settings.tool.websearch.title"
+        }
+      },
+      "label": "click-text:网络搜索",
+      "ok": true,
+      "resolved": {
+        "selector": "interactive-text=网络搜索",
+        "found": true,
+        "tag": "BUTTON",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "menu-item",
+        "dataActive": null,
+        "disabled": null,
+        "text": "网络搜索",
+        "placeholder": null,
+        "rect": {
+          "x": 61,
+          "y": 280,
+          "w": 214,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "data-slot": "menu-item",
+          "class": "group relative flex w-full items-center gap-2.5 border transition-all duration-150 outline-none select-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 hover:bg-accent data-[active=true]:bg-accent data-[active=true]:border-transparent py-1.5 h-8 rounded-[10px] border-transparent px-2.5 font-normal text-foreground text-sm hover:!bg-muted data-[active=true]:!border-transparent data-[active=true]:!bg-muted data-[active=true]:!font-medium data-[active=true]:!text-foreground [&_svg]:size-4 [&_svg]:text-foreground",
+          "data-insp-path": "packages/ui/src/components/composites/menu-list/menu-item.tsx:84:5:Comp"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "placeholder-i18n": "settings.tool.websearch.compression.cutoff.limit.placeholder"
+        }
+      },
+      "label": "hidden-placeholder:输入长度",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "placeholder=输入长度"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "compression 方式选 cutoff",
+        "do": "select",
+        "by": {
+          "id": "web-search-compression-method"
+        },
+        "option": "cutoff"
+      },
+      "label": "select-#web-search-compression-method",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#web-search-compression-method",
+        "found": true,
+        "tag": "BUTTON",
+        "id": "web-search-compression-method",
+        "role": "combobox",
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "select-trigger",
+        "dataActive": null,
+        "disabled": null,
+        "text": "不压缩",
+        "placeholder": null,
+        "rect": {
+          "x": 1151,
+          "y": 292,
+          "w": 224,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "role": "combobox",
+          "aria-controls": "radix-_r_si_",
+          "aria-expanded": "false",
+          "aria-autocomplete": "none",
+          "dir": "ltr",
+          "data-state": "closed",
+          "data-slot": "select-trigger",
+          "data-size": "sm",
+          "class": "inline-flex items-center justify-between rounded-md border-1 transition-colors outline-none font-normal bg-transparent dark:bg-input/30 text-foreground border-border aria-expanded:border-primary aria-expanded:ring-3 aria-expanded:ring-primary/20 px-3 gap-2 data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground whitespace-nowrap *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 h-8 w-56 text-sm",
+          "id": "web-search-compression-method",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/CompressionSettings/index.tsx:44:11:SelectTrigger"
+        },
+        "selectedOption": "cutoff",
+        "selectedText": "截断",
+        "optionElement": {
+          "selector": "role=option[name=截断]",
+          "found": true,
+          "tag": "DIV",
+          "id": null,
+          "role": "option",
+          "ariaLabel": null,
+          "testid": null,
+          "dataProviderId": null,
+          "dataSlot": "select-item",
+          "dataActive": null,
+          "disabled": null,
+          "text": "截断",
+          "placeholder": null,
+          "rect": {
+            "x": 1155,
+            "y": 365,
+            "w": 216,
+            "h": 32
+          },
+          "attrs": {
+            "role": "option",
+            "aria-labelledby": "radix-_r_t6_",
+            "aria-selected": "false",
+            "data-state": "unchecked",
+            "tabindex": "-1",
+            "data-slot": "select-item",
+            "class": "focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+            "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/CompressionSettings/index.tsx:49:15:SelectItem",
+            "data-radix-collection-item": ""
+          }
+        },
+        "optionsBefore": [
+          {
+            "text": "不压缩",
+            "value": null
+          },
+          {
+            "text": "截断",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "settings.tool.websearch.compression.cutoff.limit.placeholder"
+        }
+      },
+      "label": "visible-placeholder:输入长度",
+      "actual": {
+        "visibleCount": 1
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "placeholder=输入长度",
+        "found": true,
+        "tag": "INPUT",
+        "id": null,
+        "role": null,
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "input",
+        "dataActive": null,
+        "disabled": null,
+        "text": "",
+        "placeholder": "输入长度",
+        "value": "2000",
+        "rect": {
+          "x": 1151,
+          "y": 332,
+          "w": 224,
+          "h": 32
+        },
+        "attrs": {
+          "data-slot": "input",
+          "class": "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-1 transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive h-8 text-sm",
+          "placeholder": "输入长度",
+          "data-insp-path": "packages/ui/src/components/primitives/input.tsx:8:5:input",
+          "value": "2000",
+          "style": ""
+        }
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "intent": "compression 方式选回 none",
+        "do": "select",
+        "by": {
+          "id": "web-search-compression-method"
+        },
+        "option": "none"
+      },
+      "label": "select-#web-search-compression-method",
+      "ok": true,
+      "resolved": {
+        "selector": "css=#web-search-compression-method",
+        "found": true,
+        "tag": "BUTTON",
+        "id": "web-search-compression-method",
+        "role": "combobox",
+        "ariaLabel": null,
+        "testid": null,
+        "dataProviderId": null,
+        "dataSlot": "select-trigger",
+        "dataActive": null,
+        "disabled": null,
+        "text": "截断",
+        "placeholder": null,
+        "rect": {
+          "x": 1151,
+          "y": 292,
+          "w": 224,
+          "h": 32
+        },
+        "attrs": {
+          "type": "button",
+          "role": "combobox",
+          "aria-controls": "radix-_r_si_",
+          "aria-expanded": "false",
+          "aria-autocomplete": "none",
+          "dir": "ltr",
+          "data-state": "closed",
+          "data-slot": "select-trigger",
+          "data-size": "sm",
+          "class": "inline-flex items-center justify-between rounded-md border-1 transition-colors outline-none font-normal bg-transparent dark:bg-input/30 text-foreground border-border aria-expanded:border-primary aria-expanded:ring-3 aria-expanded:ring-primary/20 px-3 gap-2 data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground whitespace-nowrap *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 h-8 w-56 text-sm",
+          "id": "web-search-compression-method",
+          "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/CompressionSettings/index.tsx:44:11:SelectTrigger"
+        },
+        "selectedOption": "none",
+        "selectedText": "不压缩",
+        "optionElement": {
+          "selector": "role=option[name=不压缩]",
+          "found": true,
+          "tag": "DIV",
+          "id": null,
+          "role": "option",
+          "ariaLabel": null,
+          "testid": null,
+          "dataProviderId": null,
+          "dataSlot": "select-item",
+          "dataActive": null,
+          "disabled": null,
+          "text": "不压缩",
+          "placeholder": null,
+          "rect": {
+            "x": 1155,
+            "y": 333,
+            "w": 216,
+            "h": 32
+          },
+          "attrs": {
+            "role": "option",
+            "aria-labelledby": "radix-_r_ta_",
+            "aria-selected": "false",
+            "data-state": "unchecked",
+            "tabindex": "-1",
+            "data-slot": "select-item",
+            "class": "focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+            "data-insp-path": "src/renderer/pages/settings/WebSearchSettings/components/CompressionSettings/index.tsx:49:15:SelectItem",
+            "data-radix-collection-item": ""
+          }
+        },
+        "optionsBefore": [
+          {
+            "text": "不压缩",
+            "value": null
+          },
+          {
+            "text": "截断",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "placeholder-i18n": "settings.tool.websearch.compression.cutoff.limit.placeholder"
+        }
+      },
+      "label": "hidden-placeholder:输入长度",
+      "actual": {
+        "visibleCount": 0
+      },
+      "ok": true,
+      "resolved": {
+        "selector": "placeholder=输入长度"
+      }
+    }
+  ]
+}
