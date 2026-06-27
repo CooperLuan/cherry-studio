@@ -1,0 +1,30 @@
+# Tracer case — proves the schema for web search settings: sidebar→settings nav,
+# left provider MenuList, and locale-free default-badge (data-provider-id) assertions.
+# Spec: ../../light-medium.md §2 WS-L1
+id: ws-l1-settings-render
+title: 打开网络搜索设置页 + 渲染校验
+tier: light
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - intent: 设置页左列点「网络搜索」进入网络搜索设置
+    do: click
+    by: { i18n: settings.tool.websearch.title }
+
+  # ── 左列 provider 渲染（Tavily 单能力，唯一菜单项；scope 到 data-slot=menu-item）──
+  - check: visible
+    by: { has-attr: data-slot=menu-item, has-text: "Tavily" }
+
+  # ── 默认 Badge：keywords=exa-mcp / fetch=jina（locale 无关 data-*）──
+  - intent: keywords 默认 exa-mcp 挂绿 Badge
+    check: visible
+    by: { testid: ws-default-badge, attr: { data-provider-id: exa-mcp } }
+  - intent: fetch 默认 jina 挂绿 Badge
+    check: visible
+    by: { testid: ws-default-badge, attr: { data-provider-id: jina } }

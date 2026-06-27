@@ -1,0 +1,32 @@
+# Chat composer "+" tools menu: web search item is present-but-disabled because the
+# golden model (Qwen|CherryAI) lacks function-calling/built-in web search. golden HAS a
+# search backend (tavily/exa-mcp keys), so the disable is the model gate (!canUseWebSearch),
+# rendered as a Radix DropdownMenuItem with aria-disabled=true. Disabled launchers only
+# appear inside the "+" menu (not in the active-controls row) → must open "+" first.
+# The enable toggle (aria-pressed) needs a capable model → full (WS-M5b).
+# Spec: ../../light-medium.md §2 WS-M5
+id: ws-m5-chat-toggle-disabled
+title: 聊天 web search 工具项 disabled（当前模型不支持）
+tier: medium
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: assistants
+
+  # ── 打开输入框工具菜单（"+"，aria-label = 添加）──
+  - intent: 点击 composer 工具菜单 "+" 打开下拉
+    do: click
+    by: { aria-i18n: common.add }
+
+  # ── web search 项在菜单内、但当前模型不支持 → 禁用（aria-disabled=true）──
+  - check: visible
+    by: { role: menuitem, aria-i18n: chat.input.web_search.label }
+  - check: attr
+    by: { role: menuitem, aria-i18n: chat.input.web_search.label }
+    attr: aria-disabled
+    equals: "true"

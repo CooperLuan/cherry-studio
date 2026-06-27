@@ -1,0 +1,45 @@
+# API key list dialog: open + add row + empty-value rejection + cancel (net-zero).
+# Golden has tavily keys (unknown count) → assert edit-row visibility, NOT item count;
+# no delete-confirm (would destroy existing keys / row not addressable) → delete CRUD = full.
+# Spec: ../../light-medium.md §2 WS-M2
+id: ws-m2-apikey-dialog
+title: API key list 对话框 + 空值校验
+tier: medium
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.websearch.title }
+
+  # ── 进 tavily 面板 → 打开 API 密钥管理对话框 ──
+  - do: click
+    by: { has-attr: data-slot=menu-item, has-text: "Tavily" }
+  - do: click
+    by: { aria-i18n: settings.provider.api.key.list.open }
+  - check: visible
+    by: { i18n: settings.provider.api.key.list.title }
+
+  # ── 新增一行 → 出现编辑 input ──
+  - do: click
+    by: { i18n: common.add }
+  - check: visible
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }
+
+  # ── 空值保存被拒 → 编辑 input 仍在（未提交，toast warning）──
+  - intent: 空 key 保存 → 校验失败、留编辑态
+    do: click
+    by: { aria-i18n: common.save }
+  - check: visible
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }
+
+  # ── 取消 → 移除 pending 行（净零，不改 golden 既有 key）──
+  - do: click
+    by: { aria-i18n: common.cancel }
+  - check: hidden
+    by: { placeholder-i18n: settings.provider.api.key.new_key.placeholder }

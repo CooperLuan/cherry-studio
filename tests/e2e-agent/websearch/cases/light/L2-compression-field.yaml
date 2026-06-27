@@ -1,0 +1,36 @@
+# Conditional-field render: compression method=cutoff reveals the cutoff-limit input.
+# Spec: ../../light-medium.md §2 WS-L2
+id: ws-l2-compression-field
+title: compression 截断方式 → cutoff 输入条件显隐
+tier: light
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.websearch.title }
+
+  # ── 默认「不压缩」→ cutoff 输入不在 DOM ──
+  - check: hidden
+    by: { placeholder-i18n: settings.tool.websearch.compression.cutoff.limit.placeholder }
+
+  # ── 选「截断」→ cutoff 输入出现 ──
+  - intent: compression 方式选 cutoff
+    do: select
+    by: { id: web-search-compression-method }
+    option: cutoff
+  - check: visible
+    by: { placeholder-i18n: settings.tool.websearch.compression.cutoff.limit.placeholder }
+
+  # ── 复位「不压缩」→ cutoff 输入消失（幂等）──
+  - intent: compression 方式选回 none
+    do: select
+    by: { id: web-search-compression-method }
+    option: none
+  - check: hidden
+    by: { placeholder-i18n: settings.tool.websearch.compression.cutoff.limit.placeholder }

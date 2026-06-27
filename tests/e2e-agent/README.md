@@ -134,4 +134,7 @@ steps:
 - **`e2e-run` skill 实现**：需对齐 **agent-browser 实际命令面**（§2.2/2.3 verb → agent-browser 原语），在测试机侧落地。
 - **自愈范围**：仅重解析定位 vs 重排步骤——倾向**仅定位**（步骤改动交人）。
 - **`.compiled` 截图基线**用途：仅诊断附件，还是参与视觉回归（v1 不做视觉 gate）。
-- 现状：**11 个 light/medium case 已 live 验证并按本 schema 编码完毕**（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。`.compiled/` 待测试机首跑 compile 后回填。
+- 现状：
+  - **knowledge**：11 个 light/medium case 已 live 验证并编码（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。
+  - **websearch**：9 个 light/medium case 已 live 校准并编码（light L1-L4 · medium M1-M5；M5 测「模型不支持→工具项 disabled」gate，enable-toggle/真实搜索/删除 CRUD 推 full M2b/M5b/M6）。见 [`websearch/light-medium.md`](websearch/light-medium.md)。
+  - `.compiled/` 待测试机首跑 compile 后回填（两域皆是）。

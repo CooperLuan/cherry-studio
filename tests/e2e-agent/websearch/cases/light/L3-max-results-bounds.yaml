@@ -1,0 +1,68 @@
+# max_results blur-commit clamp (1..100) + reset→5 + >20&none InfoTooltip.
+# Spec: ../../light-medium.md §2 WS-L3
+# NOTE: clamp fires on blur; press Enter blurs the input (commit). `attr: value`
+# reads the input's current value (controlled). InfoTooltip icon aria-label="Information".
+id: ws-l3-max-results-bounds
+title: max_results 上下界 clamp + reset + 提示
+tier: light
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: settings
+  - do: click
+    by: { i18n: settings.tool.websearch.title }
+
+  # ── 上界：200 → blur → 100 ──
+  - do: type
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    text: "200"
+  - intent: Enter 触发 blur → commit clamp
+    do: press
+    keys: Enter
+  - check: attr
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    attr: value
+    equals: "100"
+
+  # ── 下界：0 → blur → 1 ──
+  - do: type
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    text: "0"
+  - do: press
+    keys: Enter
+  - check: attr
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    attr: value
+    equals: "1"
+
+  # ── 非默认 → reset 按钮出现 → 点 → 回 5 → reset 消失 ──
+  - check: visible
+    by: { aria-i18n: common.reset }
+  - do: click
+    by: { aria-i18n: common.reset }
+  - check: attr
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    attr: value
+    equals: "5"
+  - check: hidden
+    by: { aria-i18n: common.reset }
+
+  # ── >20 且 compression=none → InfoTooltip 图标出现 ──
+  - do: type
+    by: { aria-i18n: settings.tool.websearch.search_max_result.label }
+    text: "25"
+  - do: press
+    keys: Enter
+  - check: visible
+    by: { aria: Information }
+
+  # ── 复位回 5（幂等）→ 图标消失 ──
+  - do: click
+    by: { aria-i18n: common.reset }
+  - check: hidden
+    by: { aria: Information }
