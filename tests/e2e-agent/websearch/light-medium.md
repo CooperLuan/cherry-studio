@@ -1,7 +1,7 @@
 # Web Search E2E — light/medium 规格（SoT · 已 live 校准）
 
 > 域 spec，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**（无 v1/v2 共存，preference 走 SQLite）。
-> **状态**：已在 `2a1b43194`（+本批 id）live 校准。**L1-L4 + M1-M4 PASS、M3 清空动作校准、M5 拆分**（disabled gate 进 medium / toggle 推 full）。锚点已对实测对齐。`.compiled/` 待首跑 compile 产出。
+> **状态**：已 live 校准并跑通。**首跑 9 case：L1-L4 + M1-M4 全 PASS；M5 首版（disabled gate）FAIL→已转向 enable/disable toggle**（golden 活动模型从 `Qwen|CherryAI` 漂到 `DeepSeek V4 Flash|CherryInExpress`、支持 web search，disabled 前提作废，见 WS-M5）。锚点已对实测对齐，待测试机复跑 M5 toggle 确认。`.compiled/` 首跑已产出（M5 toggle 版待重跑回填）。
 
 ## 0. 架构与锚点
 
@@ -35,7 +35,7 @@
 
 - `check:` 只断 DOM 显隐 / enabled-disabled / 属性等值 / count / 文本信封。
 - **禁断**搜索结果内容、排序、质量、check 真实结果。
-- **light/medium 全离线**；真实搜索（WS-M5b）+ check 真实验证 → **full**。
+- **light/medium 全离线**；真实搜索（WS-M6）+ check 真实验证 → **full**。
 
 ## 2. 用例
 
@@ -64,7 +64,7 @@
 - **gate**：`[ws-default-badge][data-provider-id=tavily]` visible、`[...=exa-mcp]` hidden；fetch 默认（jina）**不变**（keywords/fetch 独立）
 - **复位必须**：run 内 light⊂medium 顺序跑，L4 不复位则 WS-M1 看到 tavily 已是默认 → set-default 按钮 disabled → M1 失败。结尾 `select → exa-mcp` 恢复 golden 默认（亦使本 case 可重跑）
 
-### Medium（更多分支 + CRUD + 聊天 disabled · 离线）
+### Medium（更多分支 + CRUD + 聊天 toggle · 离线）
 
 #### WS-M1 provider 配置 + set-as-default 按钮态 — PASS
 - **步骤**：点左列 tavily（单能力 keywords，唯一菜单项）→ 右侧面板 set-as-default 按钮（tavily 非默认时文案 `set_as_default`、enabled）→ 点击 → 文案 `is_default`、`disabled`
@@ -88,17 +88,18 @@
 - **步骤**：general 面板 blacklist textarea(`placeholder-i18n: blacklist_tooltip`) → 输入合法 `*://*.example.com/*`→save(`common.save`)（成功）→ 输入非法→save→错误 `blacklist_invalid_entries`
 - **gate**：保存成功 / 非法错误文案
 
-#### WS-M5 聊天 web search 项 disabled — PASS（disabled gate）
-- **prereq**：`golden-profile`（Default Assistant + 当前模型 `Qwen | CherryAI` **不支持** web search/function-calling）
-- **步骤**：到聊天 → "+" 工具菜单 → web search 项
-- **gate**：web search 菜单项 `role=menuitem` 且 `aria-disabled=true`（当前模型不支持 → 不可开启，这是确定性事实）
-- **锚点**：菜单项按 `chat.input.web_search.label` 文本 + `has-attr: aria-disabled=true`
-- **注**：`aria-pressed` toggle gate 不适用此态（disabled menuitem 无可见 aria-pressed button）
+#### WS-M5 聊天 web search 启用/关闭 toggle — PASS
+- **prereq**：`golden-profile`（Default Assistant + 当前模型 `DeepSeek V4 Flash | CherryInExpress` **支持** web search；web search 初始 OFF）
+- **步骤**：到聊天(`nav: assistants`) → 初始活动控件区无 web search 按钮 → 开 "+" 菜单(web search 项 enabled) → 点击启用(菜单关 + 按钮进活动控件区) → 点活动控件区按钮关闭(复位 OFF)
+- **gate**：① OFF 时活动控件区无 `[data-active][aria-label=网络搜索]` ② "+" 内 web search 菜单项 `enabled` ③ 启用后活动控件区出现该按钮 ④ 再点 → 消失（净零）
+- **锚点**：opener=`aria-i18n: common.add`；"+" 内项=`role=menuitem` + `aria-i18n: chat.input.web_search.label`；活动控件区按钮=`has-attr: data-active` + `aria-i18n: chat.input.web_search.label`（`ComposerActiveToolControls` 用 `launcher.label`，启用后 aria-label 仍「网络搜索」不变）
+- **关键行为**（`ComposerToolRuntime.tsx:550`）：点菜单项 `closeToolMenu()`(菜单关) + `dispatchLauncher`(toggle)；启用的 launcher 移出 "+" 菜单、进 `ComposerActiveToolControls`(L390) 渲染 `<button data-active aria-label=网络搜索>`，不开 "+" 即可见
+- **6.27 转向**：原设计测「模型不支持→`aria-disabled=true`」**前提被 golden 模型变更推翻**（live 时 golden 活动模型已从 `Qwen|CherryAI` 漂到 `DeepSeek V4 Flash|CherryInExpress`，后者支持 web search→项是可用态、`aria-disabled=null`）→ 改测真 toggle（既匹配现 golden、又测真功能）；disabled-state 是反向、模型固定的边缘态 → full（WS-M5c）
 
 ### Full（live / 暂缓）
 
-#### WS-M5b 聊天开关 enable toggle（live：需支持模型）
-- 需 seed/切换到支持 function-calling 或 built-in web search 的模型 → toggle → `aria-pressed` true/false。golden 当前模型不支持，故推 full。
+#### WS-M5c 聊天 web search 项 disabled（full：需固定不支持的模型）
+- 反向边缘态：当 assistant 模型**不支持** web search（如 `Qwen|CherryAI`）时，"+" 菜单内 web search 项 `aria-disabled=true`、不可启用。需先把 assistant 模型 pin 到不支持的型号（golden 默认模型支持 → medium 测不了此态），故推 full。
 #### WS-M2b API key 删除 CRUD（full：隔离临时 provider）
 - 在不含 golden 真实 key 的 provider（或临时种入的可弃 key）上：add→save→delete(`common.delete`)→确认(`common.delete_confirm`→`common.confirm`)→ 条目消失。golden 上不做（破坏既有 key + 行身份不可定位）。
 #### WS-M6 实际搜索信封（live：网络+LLM）
@@ -117,14 +118,14 @@
 
 - a. **导航**：左下 设置 → 左列 网络搜索；CDP 连后选 `localhost:5173/windows/main/index.html` main window（别落 selection-assistant）。
 - b. **max_results clamp = blur 后触发**；reset aria-label=「重置」。
-- c. **golden 有默认助手**（Default Assistant + `Qwen | CherryAI`），但**当前模型不支持 web search** → 菜单项 `aria-disabled` → WS-M5 改测 disabled、enable-toggle 推 full（M5b）。
+- c. **golden 有默认助手**，活动模型 = `DeepSeek V4 Flash | CherryInExpress`（**支持** web search；live 时已从早期 `Qwen|CherryAI` 漂移）→ "+" 菜单 web search 项可用 → **WS-M5 测真 enable/disable toggle**；disabled-state（不支持模型）= 反向边缘态推 full（M5c）。⚠️ golden 活动模型会随 golden 更新而变 → M5 假设「模型支持 + web search 初始 OFF」，golden 重做时须维持。
 - d. **compression + blacklist 在 general 面板默认可见**；compression 默认「不压缩」，cutoff 输入默认不在 DOM；blacklist textarea 默认可见。
 - e. **`ws-default-badge` 真渲染**（初始 exa-mcp + jina）；品牌名文本定位**须 scope 到左列 MenuList**。
 - f. **keywords 与 fetchUrls 各自独立默认**（改 keywords→tavily 后 badge=tavily+jina，fetch 未动）。
 
 ## 5. tier / secrets
 
-- **light**：WS-L1~L4；**medium**：WS-M1~M5；**full**：M2b + M5b + M6 + check（暂缓）。
+- **light**：WS-L1~L4；**medium**：WS-M1~M5（M5=enable/disable toggle）；**full**：M2b + M5c(disabled-state,需 pin 不支持模型) + M6 + check（暂缓）。
 - **run 内状态共享**：每 run 复制一份 golden 跑全部 case（非每 case），故 case 须**对全局 web search 设置幂等/自复位**：L3 reset→5、L4 reset→exa-mcp、M2 cancel 移 pending、M3 清空 username；M1 留 tavily 默认（无后续依赖）、M4 留黑名单（无后续依赖）。provider 能力图谱（仅 `jina` 双能力）= `src/shared/data/presets/webSearchProviders.ts`，锚点歧义判定的单一来源。
 - 每 case 自带 `goto 设置 → 网络搜索`（不用 `after:` 链），可独立重跑。
 - **secrets**：web search provider key 随 golden（`provider_overrides`：tavily/exa/bocha），light/medium 离线不碰真实 key → **无需** `secrets.local.json` 新增；prereq 用 `golden-profile`（隐含 web-search-configured + 当前模型不支持 web search → M5 disabled 可测）。

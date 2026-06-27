@@ -1,0 +1,42 @@
+# Chat composer web-search enable/disable toggle. golden's active model
+# (DeepSeek V4 Flash | CherryInExpress) SUPPORTS web search, so the "+" menu item is
+# ENABLED. Clicking it: closeToolMenu() + dispatchLauncher → enableWebSearch=true; the
+# enabled launcher then renders as a button in ComposerActiveToolControls with
+# data-active + aria-label=网络搜索 (launcher.label stays "网络搜索" even when on).
+# Toggle off at the end (net-zero). Assumes golden starts with web search OFF.
+# Disabled-state (model lacks web search) is the inverse, model-pinned edge case → full.
+# Spec: ../../light-medium.md §2 WS-M5
+id: ws-m5-chat-toggle
+title: 聊天 web search 启用/关闭 toggle（当前模型支持）
+tier: medium
+domain: websearch
+locale: zh-CN
+live: []
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: assistants
+
+  # ── 初始 OFF：活动控件区无 web search 按钮（不开 "+" 不渲染）──
+  - check: hidden
+    by: { has-attr: data-active, aria-i18n: chat.input.web_search.label }
+
+  # ── 开 "+" 工具菜单（aria-label = 添加）→ web search 项可用（模型支持）──
+  - do: click
+    by: { aria-i18n: common.add }
+  - check: enabled
+    by: { role: menuitem, aria-i18n: chat.input.web_search.label }
+
+  # ── 点击启用 → 菜单关闭 + 按钮进活动控件区（data-active）──
+  - do: click
+    by: { role: menuitem, aria-i18n: chat.input.web_search.label }
+  - check: visible
+    by: { has-attr: data-active, aria-i18n: chat.input.web_search.label }
+
+  # ── 点活动控件区按钮关闭 → 复位 OFF（净零）──
+  - do: click
+    by: { has-attr: data-active, aria-i18n: chat.input.web_search.label }
+  - check: hidden
+    by: { has-attr: data-active, aria-i18n: chat.input.web_search.label }
