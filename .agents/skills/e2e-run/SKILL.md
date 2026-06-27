@@ -21,7 +21,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 ## 前置（测试机 harness 提供）
 
 - `agent-browser` 已装；`pnpm install` 完成；mise/Node ≥22。
-- **golden profile**（repo 外）：老用户 + 可用 embedding provider/key + zh-CN locale，作 light/medium 默认起点。
+- **golden profile**（repo 外，真身 `~/.cherry-e2e/golden-profileDev`）：老用户 + 可用 provider/key（CherryInExpress 等）+ 网络搜索 + 文件处理引擎（mineru/paddleocr）+ zh-CN locale；业务数据空（库/笔记/agent 由 case 自建）。⚠️ **dev 模式强制给 `--user-data-dir` 追加 `Dev` 后缀**（`src/main/core/preboot/userDataLocation.ts` 的 `DEFAULT_DEV_USER_DATA_SUFFIX='Dev'`）——故 golden 真身目录名带 `Dev`：**维护** golden 传 `--user-data-dir=.../golden-profile`（app 实际读写 `golden-profileDev` 本体）；**per-run 隔离**把 golden **复制到 `<base>Dev`**、启动传 `--user-data-dir=<base>`（见 Phase 1）。
 - **secrets / fixtures**：`~/.cherry-e2e/secrets.local.json`（repo 外，脱敏模板见 repo 内 `tests/e2e-agent/secrets.example.json`）。**取值规则**：`${secrets.<key>}` → `providers[activeProvider].<key>`（如 `${secrets.embeddingModelId}` 取当前 `activeProvider` 档案的 embedding id）；`${fixtures.<key>}` → `fixtures.<key>`（绝对路径或字符串）。**值 `null`/缺失** → 引用它的步骤按 `skip-if-absent` 跳过（如 `rerankModelId`）。**切 provider 只改 `activeProvider`**。
 - **prereqs**：`golden-profile` / `completed-base` / `notes-seeded` / `no-existing-group` … 由 harness 在每 case 前置满足（详见 README §4 + 域 spec）。
 
@@ -36,12 +36,14 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 
 ### Phase 1 — 启动 App + 连 agent-browser
 
-复用 [`cherry-pr-test`](../cherry-pr-test/SKILL.md) 的 Launch/Connect 流程：
+复用 [`cherry-pr-test`](../cherry-pr-test/SKILL.md) 的 Launch/Connect 流程，但 **userData 用 golden 的 per-run 副本**（多实例隔离，互不污染；端口/路径都按本 run 取）：
 
-1. kill 残留 Cherry/electron-vite/9222/5173。
-2. `nohup pnpm debug > /tmp/cherry-debug.log 2>&1 &`，轮询 9222 LISTEN（≤30s）。
-3. `agent-browser connect 9222` → `agent-browser tab` 选 `localhost:5173` 主页（避开 webview target）。
-4. 处理首启场景（v2 迁移向导 / splash），落到主 UI。
+1. **scoped** kill 本 run 自己的残留（按本 run 端口 / userData 路径）——**绝不**全局 `pkill Electron` 或杀固定 9222，会误杀并行的其他 e2e 实例。
+2. **复制 golden**：`RUN="$HOME/.cherry-e2e/run-<runId>"`；`cp -R "$HOME/.cherry-e2e/golden-profileDev" "${RUN}Dev"`（复制到 `<base>Dev`，因 dev 会追加 Dev；整目录 `cp` 自带 `-wal/-shm`）。
+3. **启动 dev**（不能裸 `pnpm debug`——它端口写死 9222 且不传 userData）：
+   `cd <repo> && PATH="$PWD/node_modules/.bin:$PATH" dotenv -- electron-vite -- --inspect --sourcemap --remote-debugging-port=<port> --user-data-dir="$RUN"`（app 追加 Dev → 实际用 `${RUN}Dev`）。轮询 `<port>` LISTEN（≤30s）。
+4. `agent-browser connect <port>` → `agent-browser tab` 选 `localhost:<vitePort>` 主页（避开 webview target）。
+5. 处理首启场景（splash），落到主 UI。
 
 ### Phase 2 — 逐 case：满足前置 → compile / replay → 自愈
 
@@ -57,7 +59,7 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 
 ### Phase 3 — 清理
 
-kill 全部 Cherry 进程；`on <ref>` 切过分支则切回默认分支（见 cherry-pr-test Phase 6）。**绝不**留 debug 进程。
+**scoped** kill 本 run 的 Cherry 进程（按本 run 端口/userData，不碰其他实例）；删本 run 的 userData 副本 `${RUN}Dev`；`on <ref>` 切过分支则切回默认分支（见 cherry-pr-test Phase 6）。**绝不**留 debug 进程、**绝不**动 golden 本体（`golden-profileDev`）。
 
 ### Phase 4 — 汇报（对齐架构）
 
