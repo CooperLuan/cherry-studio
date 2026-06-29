@@ -1,0 +1,34 @@
+# Spec: ../../full.md §2 WS-F3 — 网络搜索真的跑完并返回结果（full·live·agentic）
+# 比 WS-F1 更进一步：WS-F1 断「工具被调」(message-tool-history)；本例断「搜索真完成且有结果」
+#   = MessageWebSearch 结果块渲染（独立 ToolDisclosure，仅 status='done' 且结果数>0 时渲染）。
+# 信封 = [data-testid=message-websearch-result]（本仓已加，+ data-result-count 作观测）。
+#   结果块在工具 done 后即现、不等整轮 4 分钟完成 → 但首个工具仍 ~70s 后才起，故 timeout 240s。
+# 红线：只断结果块在场（=搜索完成有结果，结构信号）；不断结果内容/排序/质量，data-result-count 不硬断 ≥N。
+# golden：E2E_WebSearch_Test_Assistant 已 enableWebSearch=true（同 WS-F1）。
+id: ws-f3-search-result
+title: 网络搜索真的跑完并返回结果（结果块信封）
+tier: full
+domain: websearch
+locale: zh-CN
+live: [llm, websearch]
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: assistants
+  - intent: 底部 picker 选网搜专用 assistant
+    do: click
+    by: { data-slot: popover-trigger }
+  - do: click
+    by: { role: option, has-text: "E2E_WebSearch_Test_Assistant" }
+  - intent: 在 Tiptap 输入带具体主题的 forcing prompt（同 WS-F1）
+    do: type
+    by: { has-attr: contenteditable }
+    text: "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+  - do: click
+    by: { aria-i18n: chat.input.send }
+  - intent: 等并断言搜索结果块（搜索真完成且有结果；live 首个工具 ~70s、搜索完成再加时间）
+    check: visible
+    by: { testid: message-websearch-result }
+    timeout: 240s
