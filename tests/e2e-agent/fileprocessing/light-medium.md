@@ -1,7 +1,7 @@
 # File Processing E2E — light/medium 规格（SoT · 已 live 校准）
 
 > 域 spec「文件处理 / 文档解析」，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**（preference 走 SQLite）。
-> **状态**：已在 `41dc908e0` live 校准（测试机 agent-browser，golden=zh-CN）。**FP-L1~L4 + M1/M3/M4 PASS；FP-M2 暴露弹窗快照问题 → 已重写为确定性子集**（add+空值拒绝+取消净零）。§4 校准点全部有答。`.compiled/` 待首跑 compile 产出。
+> **状态**：已在 `41dc908e0` live 校准（测试机 agent-browser，golden=zh-CN）。**FP-L1~L4 + M1/M3/M4 PASS**；**FP-M2 已升级为真 live CRUD**（弹窗快照 bug 经上游 [#16494](https://github.com/CherryHQ/cherry-studio/pull/16494) 修复并 cherry-pick + live 验证：add→行 +1 / delete→归零，均即时、无需 close→reopen；用 mistral 空列表隔离）→ **待测试机重 compile 产 `.compiled`**。§4 校准点全部有答。
 > **本质边界**：真正的「转换」（文档→Markdown / 图片→文本）在主进程执行，**renderer 不暴露转换过程**（结果被 LLM/KB 消费）。因此本域 light/medium = **设置/配置面**（离线确定性），与 `websearch` 完全同构；实际转换 = live、只能跨 `knowledge` 域间接观测 → 归 **full**（见 §6，本批不做）。
 
 ## 0. 架构与锚点
@@ -48,7 +48,8 @@
 | 保存 / 取消 | `aria-i18n: common.save`（Check） / `common.cancel`（X）|
 | 复制 / 编辑 / 删除 | `aria-i18n: common.copy` / `common.edit` / `common.delete`（Minus）|
 | 删除确认 | `window.modal.confirm`：title `common.delete_confirm`、ok `common.confirm`、cancel `common.cancel` |
-| ⚠️ **快照限制** | 弹窗 `apiKeys` 是**打开时快照 prop**（`useFileProcessingApiKeyList` `keys=useMemo(…,[apiKeys])`）→ add/delete 虽**真持久化**（`onSetApiKeys` 写 preference），但**弹窗列表不 live 重渲染**（add 后 count 不变、delete 后行仍在）。**故 medium 不断 count、不走 delete**；真实 CRUD 推 full（FP-M2b）。**这是产品侧 UX bug，已记录待定** |
+| key 行 | `[data-testid=fp-apikey-row]`（每行；`data-new=true` 为编辑中 pending 行、`false` 为已保存行）|
+| ✅ **快照限制已修** | 原 bug：弹窗 `apiKeys` 是打开时快照（`keys=useMemo(…,[apiKeys])`）→ add/delete 持久化但列表不 live 重渲染。**上游 [#16494](https://github.com/CherryHQ/cherry-studio/pull/16494) 已修**（`keys` 改 `useState`+`setKeys`、`openApiKeyList` 回写 `apiKeysInput`），已 cherry-pick 进本分支并 **live 验证**（add→行 +1、delete→归零，均无需 close→reopen）。**故 FP-M2 现断真 count CRUD**（见 §2/§4） |
 
 **导航**（live 实测）：主窗口左下 **设置** → 设置页左列 **文档解析**（`SettingsPage.tsx:102`）。CDP 连接后须选 main window tab `localhost:5173/windows/main/index.html`。
 
@@ -100,14 +101,15 @@
   - 点后：`[testid=fp-panel-default-badge][data-processor-id=doc2x]` visible；左列 `[testid=fp-menu-default-badge][data-feature=document_to_markdown][data-processor-id=doc2x]` visible
 - **注**：set-default **无 toast**（实测，只 Badge 互换）；mutation 在 per-run golden 副本，且末尾复位 → 幂等
 
-#### FP-M2 API key 列表弹窗（开 + 新增行 + 空值拒绝 + 取消净零）— PASS（已重写）
-- **步骤**：点 `#fp-item-document_to_markdown-mineru` → 点 API key 列表按钮 → 弹窗
-- **gate**：
-  - 弹窗标题 `settings.provider.api.key.list.title` visible
-  - `common.add` → 编辑行（`new_key.placeholder`「输入 API 密钥」）visible，且 `common.add` 按钮 `disabled`
-  - 空值 `common.save` → 编辑行**仍在**（校验拒绝，未提交）
-  - `common.cancel` → 编辑行 hidden（净零，**不动 golden 既有 key**）
-- **注**：**不断 count / 不走 delete-confirm**（∵弹窗快照不 live 重渲染 + 会破坏 golden key），真实 CRUD → FP-M2b（§6）
+#### FP-M2 API key 列表弹窗 · 真 live CRUD（add→行+1 / delete→归零）— 升级（#16494 修复后）
+- **隔离**：用 `#fp-item-document_to_markdown-mistral`（golden **无** mistral key → 空列表起点，**绝不碰** golden 已配的 paddleocr/mineru/doc2x）。apiKeys 按 processorId 存、跨 feature 共享，故选哪个 mistral section 都一样。
+- **步骤 / gate**：
+  - 进 mistral 面板 → 点 API key 列表按钮 → 弹窗标题 `settings.provider.api.key.list.title` visible
+  - 初始空态 `error.no_api_key` visible
+  - `common.add` → 输入假 key `e2e-fake-key-001` → `common.save` → **`count [data-testid=fp-apikey-row] == 1`**（live +1，#16494 前会归 0）+ 编辑 `new_key.placeholder` hidden（已转 saved 行）
+  - 行内 `common.delete` → `window.modal.confirm` 的 `common.confirm` → **`error.no_api_key` 再现**（live 归零，#16494 前行会残留）→ 净零
+- **红线**：只断行 count / 空态在场，**不断 key 明文**（masked）。
+- **注**：原「快照不重渲染」绕道（add+空值拒绝+cancel）+ full 的 FP-M2b（close→reopen）**因 #16494 作废**，真 CRUD 已并入本 medium 例。`data-testid=fp-apikey-row` 见 §0 表。
 
 #### FP-M3 API 地址非法校验 — PASS
 - **步骤**：点 `#fp-item-image_to_text-mistral` → API 地址输入（`settings.provider.api_host`）→ 真实键盘清空后填非法值 `not a url` → blur
@@ -147,12 +149,12 @@
 - **light**：FP-L1~L4；**medium**：FP-M1~M4；**full**：见 §6（本批不做）。
 - **secrets**：文件处理引擎 key（paddleocr/mineru/doc2x）随 golden（per-run 复制即带）。**light/medium 离线、不碰真实 key、不触发引擎** → **无需** `secrets.local.json` 新增。prereq 用 `golden-profile`（隐含 `file-processing-configured`）。
 - **prereq 命名**：`file-processing-configured`（golden 已满足）。
-- **run 内幂等**：每 run 复制一份 golden 跑全部 case → mutation 须自复位。**FP-M1 末尾复位默认 mineru**（否则破坏 FP-L2 的语义，虽 light 先跑）；FP-M2 cancel 净零；FP-M3 留合法/非法 host（无后续依赖）；FP-M4 留 PP-StructureV3（末例、无依赖）。
+- **run 内幂等**：每 run 复制一份 golden 跑全部 case → mutation 须自复位。**FP-M1 末尾复位默认 mineru**（否则破坏 FP-L2 的语义，虽 light 先跑）；**FP-M2 末尾 delete 已加的 mistral key → 净零**（mistral 本无 golden key，删后回空态）；FP-M3 留合法/非法 host（无后续依赖）；FP-M4 留 PP-StructureV3（末例、无依赖）。
 
 ## 6. Full（暂不做 · 留档）
 
 真实转换在主进程、renderer 不可见，只能跨域观测，故全 live、归 full，**本批不实现**：
 - **FP-F1（live，跨 `knowledge` 域）**：经 KB 摄取一个 **PDF** → 默认 `mineru` document_to_markdown → item 到 `completed` + `kb-chunk-card` ≥1（复用 KB L2/L3 锚点）。唯一能确定性观测「配置的引擎真能转换」的路径。
-- **FP-M2b（CRUD 隔离）**：用**无 golden key 的 mistral/open-mineru**（空 key 列表）→ add+save → close→reopen 弹窗 → 条目 count=1 → delete+confirm → close→reopen → count=0。绕开「弹窗快照不重渲染」+ 不破坏 golden 既有 key。
-- **FP-F2（live）**：paddleocr 图片 OCR，经某消费路径触发；observability 待定。
+- ~~**FP-M2b（CRUD 隔离）**~~ — **作废**：#16494 修了弹窗快照不重渲染，真 CRUD 已并入 medium FP-M2（mistral 空列表隔离、add→count 1、delete→空态、净零），不再需要 close→reopen 绕道。
+- **FP-F2（live · 在「翻译」非 KB）**：OCR `image_to_text` 由**翻译**消费（`/app/translate`），不在知识库。上传/拖拽/粘贴图片 → `startOcr` → `file_processing.start_job(image_to_text)` → **OCR 文本回填翻译输入 `<textarea>`**（`placeholder-i18n: translate.input.placeholder`，renderer 可观测）；处理中 `div[role=status][aria-live=polite]`（`ocr.processing`）+ 成功 toast `translate.files.ocr_completed`。引擎默认 macOS `system`（Vision，离线无 key）/ Linux `tesseract` → 可离线。gate=上传后 textarea 非空（信封，不断质量）。见 `full.md` §4。
 - **（非 gating 观测）**：引擎连接 check（若设置页提供）。
