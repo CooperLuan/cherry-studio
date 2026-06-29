@@ -1,7 +1,8 @@
 # Spec: ../../light-medium.md §4 M7 — 全确定性（本地 DB/state），无网络
 # 排除到 full：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize
-# 锚点说明：库行无 testid，用 Tailwind class `group/kb` + 库名 has-text 定位；
-#           组用 `group/grp` + 组名。`common.more` 必须 within 库行内（库行/组行同名）。
+# 锚点说明：库行用 `[data-testid=kb-base-row]` + 库名 has-text 定位（testid 自 chore(knowledge-navigator) 起就位）；
+#           组仍用 Tailwind class `group/grp` + 组名。`common.more` 必须 within 库行内（库行/组行同名）。
+# ⚠️ 本 YAML 已 retarget 到 testid，但 .compiled 仍是 class-based（group/kb class 仍在 DOM 故旧 baseline 可重放）；下次 compile 收敛。
 id: kb-m7-navigator-mgmt
 title: navigator 分组/库管理
 tier: medium
@@ -35,9 +36,9 @@ steps:
   # ── 移库入组 ──
   - intent: hover 库行显示 more
     do: hover
-    by: { class: "group/kb", has-text: "E2E Light KB" }
+    by: { testid: "kb-base-row", has-text: "E2E Light KB" }
   - do: click
-    by: { within: { class: "group/kb", has-text: "E2E Light KB" }, aria-i18n: common.more }
+    by: { within: { testid: "kb-base-row", has-text: "E2E Light KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.move_to }
   - do: click
@@ -50,9 +51,9 @@ steps:
 
   # ── 重命名库（h1 更新）──
   - do: hover
-    by: { class: "group/kb", has-text: "E2E Light KB" }
+    by: { testid: "kb-base-row", has-text: "E2E Light KB" }
   - do: click
-    by: { within: { class: "group/kb", has-text: "E2E Light KB" }, aria-i18n: common.more }
+    by: { within: { testid: "kb-base-row", has-text: "E2E Light KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.rename }
   - do: type
@@ -72,4 +73,4 @@ steps:
   - do: click
     by: { aria-i18n: common.clear }
   - check: visible
-    by: { class: "group/kb", has-text: "E2E Light KB Renamed" }
+    by: { testid: "kb-base-row", has-text: "E2E Light KB Renamed" }
