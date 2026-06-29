@@ -196,9 +196,8 @@
 - **移库入组**：库行（`[data-testid=kb-base-row]` + 库名 has-text）hover → `aria-label=common.more` 菜单（须 within 库行内，库行/组行同名）→ `knowledge.context.move_to` 段 → 选目标组 → 展开目标组 accordion → 库行 re-render 到目标 section
 - **重命名库**：库行菜单 → `knowledge.context.rename` → `KnowledgeBaseNameDialog`（`input#knowledge-entity-name`）→ `DetailHeader` h1（`class*=text-2xl`）更新
 - **navigator 搜索**：搜索框（placeholder `knowledge.search`）→ 输入不匹配 → 空态 `knowledge.empty`（preset `no-knowledge`）→ clear 按钮（`aria-label=common.clear`，仅非空时显）→ 恢复
-- **确定性**：全 yes（本地 DB/state）。库行已有 `[data-testid=kb-base-row]`（chore(knowledge-navigator) 起）→ 不再靠 `group/kb` class；组行仍用 `class*=group/grp`，h1 用 `class*=text-2xl`。
+- **确定性**：全 yes（本地 DB/state）。库行已有 `[data-testid=kb-base-row]`（chore(knowledge-navigator) 起）→ 不再靠 `group/kb` class；组行仍用 `class*=group/grp`，h1 用 `class*=text-2xl`。`.compiled` 已 live 重 compile 收敛到 testid（resolved selector 用 `[data-testid="kb-base-row"]`）。
 - **菜单定位**：MenuItem 已带 `role=menuitem`（upstream/main，live 复核）→ 按角色或 zh-CN 文本定位。
-- **⚠️ M7 .compiled 待重 compile**：YAML 已 retarget 到 `kb-base-row` testid，但已落库的 `.compiled` 仍是 class-based（`group/kb` class 仍在 DOM，旧 baseline 可重放）；下次测试机 compile 时收敛。
 - **排除到 full**：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize（需合成鼠标事件）。
 
 ---

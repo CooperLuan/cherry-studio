@@ -41,6 +41,10 @@
       "resolved": {
         "selector": "[role=\"menuitem\"]:has-text(\"新建分组\")",
         "found": true,
+        "tag": "BUTTON",
+        "role": "menuitem",
+        "ariaLabel": null,
+        "dataSlot": "menu-item",
         "text": "新建分组"
       }
     },
@@ -151,8 +155,8 @@
         "tag": "BUTTON",
         "role": null,
         "ariaLabel": null,
-        "dataSlot": "popover-trigger",
-        "text": "添加数据源"
+        "dataSlot": "button",
+        "text": "添加"
       }
     },
     {
@@ -175,7 +179,7 @@
         "role": null,
         "ariaLabel": null,
         "dataSlot": null,
-        "text": "e2e-group\n0"
+        "text": "e2e-group0"
       }
     },
     {
@@ -184,20 +188,20 @@
         "intent": "hover 库行显示 more",
         "do": "hover",
         "by": {
-          "class": "group/kb",
+          "testid": "kb-base-row",
           "has-text": "E2E Light KB"
         }
       },
-      "label": "hover knowledge base row",
+      "label": "hover knowledge base row via kb-base-row",
       "ok": true,
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB\")",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB\")",
         "found": true,
         "tag": "DIV",
         "role": null,
         "ariaLabel": null,
         "dataSlot": "context-menu-trigger",
-        "text": "E2E Light KB\n5 文档"
+        "text": "E2E Light KB1 文档"
       }
     },
     {
@@ -206,16 +210,16 @@
         "do": "click",
         "by": {
           "within": {
-            "class": "group/kb",
+            "testid": "kb-base-row",
             "has-text": "E2E Light KB"
           },
           "aria-i18n": "common.more"
         }
       },
-      "label": "click KB row scoped more",
+      "label": "click KB row scoped more via kb-base-row",
       "ok": true,
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB\") button[aria-label=\"更多\"]",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB\") button[aria-label=\"更多\"]",
         "found": true,
         "tag": "BUTTON",
         "role": null,
@@ -238,6 +242,10 @@
       "resolved": {
         "selector": "[role=\"menuitem\"]:has-text(\"移动到\")",
         "found": true,
+        "tag": "DIV",
+        "role": "menuitem",
+        "ariaLabel": null,
+        "dataSlot": "dropdown-menu-sub-trigger",
         "text": "移动到"
       }
     },
@@ -257,6 +265,10 @@
       "resolved": {
         "selector": "[role=\"menuitem\"]:has-text(\"e2e-group\")",
         "found": true,
+        "tag": "DIV",
+        "role": "menuitem",
+        "ariaLabel": null,
+        "dataSlot": "dropdown-menu-item",
         "text": "e2e-group"
       }
     },
@@ -285,7 +297,7 @@
         "role": null,
         "ariaLabel": null,
         "dataSlot": "accordion-trigger",
-        "text": "e2e-group\n1"
+        "text": "e2e-group1"
       }
     },
     {
@@ -299,19 +311,19 @@
           "has-text": "E2E Light KB"
         }
       },
-      "label": "KB row under e2e-group visible",
+      "label": "KB row under e2e-group visible via kb-base-row",
       "ok": true,
       "actual": {
         "visibleCount": 1
       },
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB\")",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB\")",
         "found": true,
         "tag": "DIV",
         "role": null,
         "ariaLabel": null,
         "dataSlot": "context-menu-trigger",
-        "text": "E2E Light KB\n5 文档"
+        "text": "E2E Light KB1 文档"
       }
     },
     {
@@ -319,20 +331,20 @@
       "yaml": {
         "do": "hover",
         "by": {
-          "class": "group/kb",
+          "testid": "kb-base-row",
           "has-text": "E2E Light KB"
         }
       },
-      "label": "hover moved KB row",
+      "label": "hover moved KB row via kb-base-row",
       "ok": true,
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB\")",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB\")",
         "found": true,
         "tag": "DIV",
         "role": null,
         "ariaLabel": null,
         "dataSlot": "context-menu-trigger",
-        "text": "E2E Light KB\n5 文档"
+        "text": "E2E Light KB1 文档"
       }
     },
     {
@@ -341,16 +353,16 @@
         "do": "click",
         "by": {
           "within": {
-            "class": "group/kb",
+            "testid": "kb-base-row",
             "has-text": "E2E Light KB"
           },
           "aria-i18n": "common.more"
         }
       },
-      "label": "click moved KB scoped more",
+      "label": "click moved KB scoped more via kb-base-row",
       "ok": true,
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB\") button[aria-label=\"更多\"]",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB\") button[aria-label=\"更多\"]",
         "found": true,
         "tag": "BUTTON",
         "role": null,
@@ -373,6 +385,10 @@
       "resolved": {
         "selector": "[role=\"menuitem\"]:has-text(\"重命名\")",
         "found": true,
+        "tag": "DIV",
+        "role": "menuitem",
+        "ariaLabel": null,
+        "dataSlot": "dropdown-menu-item",
         "text": "重命名"
       }
     },
@@ -413,6 +429,10 @@
       "resolved": {
         "selector": "[role=\"dialog\"] button:has-text(\"重命名\")",
         "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
         "text": "重命名"
       }
     },
@@ -498,9 +518,13 @@
       "label": "clear navigator search",
       "ok": true,
       "resolved": {
-        "selector": "navigator search clear button",
-        "found": false,
-        "error": "locator.elementHandle: Timeout 500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[aria-label=\"清除\"], button[ar"
+        "selector": "button[aria-label=\"清除\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": "清除",
+        "dataSlot": "button",
+        "text": ""
       }
     },
     {
@@ -508,23 +532,23 @@
       "yaml": {
         "check": "visible",
         "by": {
-          "class": "group/kb",
+          "testid": "kb-base-row",
           "has-text": "E2E Light KB Renamed"
         }
       },
-      "label": "renamed KB row restored after clear",
+      "label": "renamed KB row restored after clear via kb-base-row",
       "ok": true,
       "actual": {
         "visibleCount": 1
       },
       "resolved": {
-        "selector": ".group\\/kb:has-text(\"E2E Light KB Renamed\")",
+        "selector": "[data-testid=\"kb-base-row\"]:has-text(\"E2E Light KB Renamed\")",
         "found": true,
         "tag": "DIV",
         "role": null,
         "ariaLabel": null,
         "dataSlot": "context-menu-trigger",
-        "text": "E2E Light KB Renamed\n5 文档"
+        "text": "E2E Light KB Renamed1 文档"
       }
     }
   ]

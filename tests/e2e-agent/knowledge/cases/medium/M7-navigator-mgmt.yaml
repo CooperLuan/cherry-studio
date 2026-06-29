@@ -2,7 +2,6 @@
 # 排除到 full：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize
 # 锚点说明：库行用 `[data-testid=kb-base-row]` + 库名 has-text 定位（testid 自 chore(knowledge-navigator) 起就位）；
 #           组仍用 Tailwind class `group/grp` + 组名。`common.more` 必须 within 库行内（库行/组行同名）。
-# ⚠️ 本 YAML 已 retarget 到 testid，但 .compiled 仍是 class-based（group/kb class 仍在 DOM 故旧 baseline 可重放）；下次 compile 收敛。
 id: kb-m7-navigator-mgmt
 title: navigator 分组/库管理
 tier: medium
