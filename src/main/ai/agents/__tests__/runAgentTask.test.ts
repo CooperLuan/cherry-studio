@@ -47,7 +47,7 @@ vi.mock('@data/services/AgentService', () => ({
   agentService: { getAgent: vi.fn() }
 }))
 vi.mock('@data/services/AgentSessionService', () => ({
-  agentSessionService: { create: vi.fn() }
+  agentSessionService: { create: vi.fn(), resolveDefaultWorkspaceForAgent: vi.fn() }
 }))
 vi.mock('@data/services/AgentWorkspaceService', () => ({
   agentWorkspaceService: { getById: vi.fn() }
@@ -189,6 +189,7 @@ describe('runAgentTask', () => {
     vi.mocked(jobScheduleService.getById).mockReset()
     vi.mocked(agentService.getAgent).mockReset()
     vi.mocked(agentSessionService.create).mockReset()
+    vi.mocked(agentSessionService.resolveDefaultWorkspaceForAgent).mockReset().mockResolvedValue({ type: 'system' })
     vi.mocked(agentWorkspaceService.getById).mockReset()
     vi.mocked(readHeartbeat).mockReset()
     vi.mocked(agentChannelService.getSubscribedChannels).mockReset().mockResolvedValue([])
@@ -296,10 +297,39 @@ describe('runAgentTask', () => {
     await promise
 
     expect(readHeartbeat).toHaveBeenCalledWith('/ws/a')
+    // Heartbeat runs in its bound user workspace — it must NOT fall back to the agent default.
+    expect(agentSessionService.resolveDefaultWorkspaceForAgent).not.toHaveBeenCalled()
     expect(agentSessionService.create).toHaveBeenCalledWith({
       agentId: 'a1',
       name: 'heartbeat',
       workspace: { type: 'user', workspaceId: 'ws-1' }
+    })
+  })
+
+  // Regular tasks carry no workspace picker yet, so they bind to the agent's
+  // default workspace at fire time instead of the throwaway one on the template.
+  it('binds a non-heartbeat task to the agent default workspace', async () => {
+    vi.mocked(jobService.getById).mockResolvedValueOnce(makeJobSnapshot())
+    vi.mocked(jobScheduleService.getById).mockResolvedValueOnce(makeSchedule('daily-summary'))
+    vi.mocked(agentService.getAgent).mockResolvedValueOnce(makeAgent())
+    vi.mocked(agentSessionService.resolveDefaultWorkspaceForAgent).mockResolvedValueOnce({
+      type: 'user',
+      workspaceId: 'ws-default'
+    })
+    vi.mocked(agentSessionService.create).mockResolvedValueOnce(makeSession('/ws/a'))
+
+    const promise = runAgentTask(
+      makeCtx({ input: { agentId: 'a1', prompt: 'hi', timeoutMinutes: 0, workspace: { type: 'system' } } })
+    )
+    await vi.waitFor(() => expect(mockStartRun).toHaveBeenCalled())
+    captured.listeners[0].onDone({ status: 'completed' })
+    await promise
+
+    expect(agentSessionService.resolveDefaultWorkspaceForAgent).toHaveBeenCalledWith('a1')
+    expect(agentSessionService.create).toHaveBeenCalledWith({
+      agentId: 'a1',
+      name: 'daily-summary',
+      workspace: { type: 'user', workspaceId: 'ws-default' }
     })
   })
 

@@ -135,13 +135,18 @@ export async function runAgentTask(ctx: JobContext<AgentTaskInput>): Promise<Age
     ].join('\n')
   }
 
+  // Heartbeat fires run in the user workspace they were bound to (validated
+  // above). Regular tasks carry no workspace picker yet, so bind them to the
+  // agent's default workspace at fire time instead of a throwaway system one.
+  const sessionWorkspace = isHeartbeat ? workspace : await agentSessionService.resolveDefaultWorkspaceForAgent(agentId)
+
   // Always create a fresh session per fire. Scheduled tasks are discrete
   // invocations; cross-fire session reuse would only carry stale model
   // context. Persistent state lives in workspace files (heartbeat.md, etc.).
   const session = await agentSessionService.create({
     agentId,
     name: taskName ?? 'Scheduled task',
-    workspace
+    workspace: sessionWorkspace
   })
 
   const subscribedChannels = scheduleId ? await agentChannelService.getSubscribedChannels(scheduleId) : []

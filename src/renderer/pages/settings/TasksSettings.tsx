@@ -36,6 +36,7 @@ import { useChannels } from '@renderer/hooks/agent/useChannels'
 import { useCreateTask, useDeleteTask, useRunTask, useTaskLogs, useUpdateTask } from '@renderer/hooks/agent/useTasks'
 import { useConversationNavigation } from '@renderer/hooks/useConversationNavigation'
 import { useTheme } from '@renderer/hooks/useTheme'
+import { AGENT_WORKSPACE_TYPE } from '@shared/data/api/schemas/agentWorkspaces'
 import type { Trigger } from '@shared/data/api/schemas/jobs'
 import type {
   AgentEntity,
@@ -783,14 +784,12 @@ const CreateForm: FC<{
   const [promptModalOpen, setPromptModalOpen] = useState(false)
   const [schedule, setSchedule] = useState<ScheduleFormState>({ kind: 'interval', value: '', timeoutMinutes: '' })
   const [channelIds, setChannelIds] = useState<string[]>([])
-  // TODO(agent-workspace-picker): wire the workspace picker before re-enabling task creation.
-  const [workspaceSource] = useState<CreateTaskRequest['workspace'] | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const isValid = agentId && name.trim() && prompt.trim() && schedule.value.trim() && workspaceSource
+  const isValid = agentId && name.trim() && prompt.trim() && schedule.value.trim()
 
   const handleCreate = useCallback(async () => {
-    if (!agentId || !name.trim() || !prompt.trim() || !schedule.value.trim() || !workspaceSource) return
+    if (!agentId || !name.trim() || !prompt.trim() || !schedule.value.trim()) return
     const trigger = formStateToTrigger(schedule.kind, schedule.value.trim())
     if (!trigger) return
     setSaving(true)
@@ -800,14 +799,14 @@ const CreateForm: FC<{
         name: name.trim(),
         prompt: prompt.trim(),
         trigger,
-        workspace: workspaceSource,
+        workspace: { type: AGENT_WORKSPACE_TYPE.SYSTEM },
         timeoutMinutes: timeout && timeout > 0 ? timeout : undefined,
         channelIds: channelIds.length > 0 ? channelIds : undefined
       })
     } finally {
       setSaving(false)
     }
-  }, [agentId, name, prompt, schedule, workspaceSource, channelIds, onCreate])
+  }, [agentId, name, prompt, schedule, channelIds, onCreate])
 
   return (
     <SettingsContentColumn theme={theme}>
