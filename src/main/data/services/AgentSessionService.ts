@@ -20,7 +20,7 @@ import type {
   ListAgentSessionsQuery,
   UpdateAgentSessionDto
 } from '@shared/data/api/schemas/agentSessions'
-import { AGENT_WORKSPACE_TYPE } from '@shared/data/api/schemas/agentWorkspaces'
+import { AGENT_WORKSPACE_TYPE, type AgentSessionWorkspaceSource } from '@shared/data/api/schemas/agentWorkspaces'
 import type { EntitySearchItem } from '@shared/data/api/schemas/search'
 import { and, asc, desc, eq, gte, inArray, isNull, or, type SQL, sql } from 'drizzle-orm'
 import { v4 as uuidv4 } from 'uuid'
@@ -163,6 +163,23 @@ export class AgentSessionService {
       .limit(1)
     if (!row) throw DataApiErrorFactory.notFound('Session', id)
     return rowToSession(row)
+  }
+
+  async resolveDefaultWorkspaceForAgent(agentId: string): Promise<AgentSessionWorkspaceSource> {
+    const db = application.get('DbService').getDb()
+    const [row] = await db
+      .select({ session: sessionsTable, workspace: agentWorkspaceTable })
+      .from(sessionsTable)
+      .innerJoin(agentWorkspaceTable, eq(sessionsTable.workspaceId, agentWorkspaceTable.id))
+      .where(eq(sessionsTable.agentId, agentId))
+      .orderBy(desc(sessionsTable.updatedAt), asc(sessionsTable.id))
+      .limit(1)
+
+    if (!row || row.workspace.type === AGENT_WORKSPACE_TYPE.SYSTEM) {
+      return { type: AGENT_WORKSPACE_TYPE.SYSTEM }
+    }
+
+    return { type: AGENT_WORKSPACE_TYPE.USER, workspaceId: row.workspace.id }
   }
 
   async ensureTraceId(sessionId: string): Promise<string> {
