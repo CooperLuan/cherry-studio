@@ -1,9 +1,9 @@
-# File Processing E2E — full（live·跨域观测）规格（SoT · 🆕 设计 · 待 live 校准）
+# File Processing E2E — full（live·跨域观测）规格（SoT · live 校准通过 · 待 compile）
 
 > 域 spec 的 **full 层**，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**。
 > 与 [`light-medium.md`](light-medium.md)（设置页配置面，离线）正交：本文件测「**配置的解析引擎真的能把文件转换出来**」——live、调真实远程引擎、只能**跨 `knowledge` 域间接观测**。
 > **本质边界**：文件处理的「转换」（文档→Markdown / 图片→文本）在**主进程**执行、renderer 不暴露转换过程 → 没有 assistant/agent 信封可测（不同于 KB/web search 的 full）。**唯一确定性观测口 = KB 摄入**：往知识库加一个**需要转换的文件**（PDF），看它经 `document_to_markdown` 转换 → 索引 → item 到 `completed` + 出 chunk。
-> **状态**：FP-F1 设计完成、待 live 校准；**硬依赖一个活的转换 key**（见 §1）。
+> **状态**：FP-F1 **live 校准通过**（2026-06-29 `wsf3-fpf1`：MinerU key 活、21.6s 到 `completed`、chunk=1，锚点全验证）+ **YAML 已编码**；**待测试机 compile**（须先 bake golden `E2E_Test_KB.fileProcessorId=mineru` + 落稳定 PDF fixture，见 §3）。
 
 ## 0. 表面与锚点（复用 KB light L2/L3，已校准）
 
@@ -21,24 +21,24 @@
 
 ## 2. 用例
 
-### FP-F1 配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）— 🆕 设计 · ⏳ 待 live 校准（`cases/full/FP-F1-pdf-ingest.yaml`）
-- **tier**：full · **live**：`[file_processing, embedding]` · **prereq**：`golden-profile` + **带文档处理器（`fileProcessorId`=mineru 等）且 key 可用的 KB** + **PDF fixture**
-- **意图**：往一个配了 `document_to_markdown` 的 KB 加一个 PDF → 引擎真把它转成 Markdown → 分块嵌入 → item `completed`。这是文件处理「真转换」**唯一**可确定性观测的路径。
-- **流程**：`nav: knowledge` → 打开目标 KB → Add → `file` 源 → osascript `pick-file` 喂 `${fixtures.sample-pdf}` → **轮询等 `[data-testid=kb-item-row][data-status=completed]`** → 点该行 → 断 `[data-testid=kb-chunk-card]` ≥1。
-- **gate**：`check: visible {testid: kb-item-row, has-attr: "data-status=completed"} timeout: 300s`（转换+嵌入耗时，给足）；`check: count {testid: kb-chunk-card} min: 1`。
-- **红线**：只断终态 + chunk 计数，**不断** chunk 文本/转换质量。
-- **校准要点（顺序）**：① **先验证转换 key 活**（拿小 PDF 试转，看到 `completed` 还是 `failed`）；② 确认目标 KB 的 `fileProcessorId` 已设（没设则设成 golden 有 key 的引擎）；③ 备一个**小 PDF fixture**（repo 外，置 `…/knowledge_test_docs/` 同 sample.md）；④ 实测 `completed` 出现时机以定 timeout；⑤ 失败时区分 key 死 / 配置缺口 / 引擎挂。
+### FP-F1 配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）— ✅ live 校准通过 · ⏳ 待 compile（`cases/full/FP-F1-pdf-ingest.yaml`）
+- **tier**：full · **live**：`[file-processing, embedding]` · **prereq**：`golden-profile` + `pdf-processor-base`（`E2E_Test_KB` 已 bake `fileProcessorId=mineru`，活 key）+ `${fixtures.sample-pdf}`
+- **意图**：往配了 `document_to_markdown(mineru)` 的 KB 加 PDF → 引擎真转成 Markdown → 分块嵌入 → item `completed` + chunk≥1。文件处理「真转换」**唯一**可确定性观测的路径。
+- **live 实测（wsf3-fpf1）**：✅ MinerU key/服务可用；加 1 页 PDF → **21.6s 到 `completed`**（remote-poll 17.1s + index 1.5s）；`kb-item-row[data-status=completed]` + `kb-chunks-count=1` + `kb-chunk-card`×1，chunk 文本含「deterministic text for MinerU conversion」。
+- **流程（已编码）**：Add → `file` 源 → osascript `pick-file` 喂 `${fixtures.sample-pdf}` → **按文件名 `fp-f1-sample` 锚定 PDF 行**轮询到 `completed`（≤180s）→ 点该行 → `kb-chunk-panel`/`kb-chunks-count` 在场 + `kb-chunk-card` ≥1。
+- **⚠️ gate 关键**：**必须按文件名锚定 PDF 行**（`by:{testid:kb-item-row, has-text:"fp-f1-sample"}`）——`E2E_Test_KB` 已有 sample.md（本就 `completed`），「任意 completed 行」会在 PDF 还没转完时误过。
+- **红线**：只断 PDF 行终态 + chunk 计数，**不断** chunk 文本/转换质量/Markdown 排版。
 
 ## 3. config 依赖 / fixtures
 
-| 占位 | 真值（待校准确认）|
+| 占位 | 真值 |
 |---|---|
-| 目标 KB | 复用 `E2E_Test_KB` 但**须确认/设置 `fileProcessorId`**（document_to_markdown），或新建带处理器的 KB |
-| 转换引擎 | golden 默认 `default_document_to_markdown=mineru`（overrides mineru/doc2x/paddleocr 有 key）→ **校准须验 key 真活**（在「6 key 待轮换」清单内，可能已死）|
-| PDF fixture | `${fixtures.sample-pdf}` — **待补**（repo 外绝对路径；secrets.example.json + 测试机 fixtures 都要加）|
+| 目标 KB | 复用 `E2E_Test_KB` —— **golden 须 bake `fileProcessorId=mineru`**（校准时在 per-run UI 设过，DB 验 `file_processor_id=mineru`；现需写进 golden 本体）|
+| 转换引擎 | `mineru`（`https://mineru.net`，golden overrides 有 key）—— **2026-06-29 校准验活**（21.6s 转完 1 页 PDF）|
+| PDF fixture | `${fixtures.sample-pdf}` = `…/knowledge_test_docs/e2e/fp-f1-sample.pdf`（secrets.example.json 已加占位；**测试机须落一个稳定小 PDF**，文件名含 `fp-f1-sample`、内嵌确定文本）|
 
 ## 4. 待办
 
-1. ⏳ **FP-F1 待 live 校准**：测试机先验转换 key → 备 PDF fixture → 设 KB `fileProcessorId` → 跑摄入到 `completed` → 回报时机/可行性 → 编码 YAML + compile。
-2. ⏳ backlog（按需）：**FP-M2b**（apikey 删除 CRUD，用无 golden key 的 mistral/open-mineru 空列表隔离 + close→reopen 观测 count，绕开弹窗快照不重渲染）；**FP-F2**（图片 OCR，image_to_text；observability 待定，macOS `system`/Vision 可离线但 KB 是否对图片走 OCR 未确认）。
-3. ⚠️ **依赖**：PDF fixture 落地 + 转换 key 轮换（若 golden 现有 key 已死）。
+1. ✅ FP-F1 live 校准通过 + YAML 已编码（`cases/full/FP-F1-pdf-ingest.yaml`）+ `sample-pdf` 入 secrets.example。
+2. ⏳ **compile 前置（测试机）**：① bake golden `E2E_Test_KB.file_processor_id=mineru`；② 落稳定 PDF fixture（`fp-f1-sample.pdf`）+ 在 secrets.local.json 填 `fixtures.sample-pdf`；③ compile FP-F1 → 产 `.compiled`。
+3. ⏳ backlog（按需）：**FP-M2b**（apikey 删除 CRUD，用无 golden key 的 mistral/open-mineru 空列表隔离 + close→reopen 观测 count，绕开弹窗快照不重渲染）；**FP-F2**（图片 OCR，image_to_text；observability 待定，macOS `system`/Vision 可离线但 KB 是否对图片走 OCR 未确认）。

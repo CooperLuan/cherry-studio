@@ -1,0 +1,54 @@
+# Spec: ../../full.md §2 FP-F1 — 配置的解析引擎真能把 PDF 转换并索引（full·live·跨 knowledge 域）
+# 这是文件处理「真转换」唯一可确定性观测的路径：往配了 document_to_markdown(mineru) 的 KB 加 PDF
+#   → 引擎真转成 Markdown → 分块嵌入 → item completed + 出 chunk。
+# ⚠️ 硬依赖活的 mineru key（golden 已 bake，2026-06-29 校准验活：21.6s 到 completed）。key 死→item failed。
+# ⚠️ gate 必须按【PDF 文件名 fp-f1-sample】锚定那一行：E2E_Test_KB 已有 sample.md(本就 completed)，
+#   否则「任意 completed 行」会让 gate 在 PDF 还没转完时就误过。
+# 红线：只断 PDF 行终态 completed + chunk≥1（结构信号）；不断 chunk 文本/转换质量/Markdown 排版。
+id: fp-f1-pdf-ingest
+title: 配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）
+tier: full
+domain: fileprocessing
+locale: zh-CN
+live: [file-processing, embedding]
+prereqs: [golden-profile, pdf-processor-base]   # E2E_Test_KB 已 bake fileProcessorId=mineru（活 key）
+fixtures: [sample-pdf]
+
+steps:
+  - intent: 打开数据源菜单（toolbar Add）
+    do: click
+    by: { i18n: knowledge.data_source.toolbar.add }
+
+  - intent: 选 file 源 → 立即弹原生 OS 文件框
+    do: click
+    by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.file }
+
+  # OS 级逃生口：agent-browser 驱不动原生框 → osascript pick-file（Cmd+Shift+G→输绝对路径→Enter）
+  - intent: 用 osascript 在原生「打开」框喂入 PDF fixture 绝对路径
+    do: shell
+    osascript: pick-file
+    path: "${fixtures.sample-pdf}"
+
+  # 有界轮询【PDF 行】状态到 completed（真 mineru 转换 + 嵌入，实测 ~22s，给足 180s）
+  - intent: 轮询 PDF 行（按文件名锚定，避开既有 sample.md 行）到 completed
+    check: attr
+    by: { testid: kb-item-row, has-text: "fp-f1-sample" }
+    attr: data-status
+    equals: completed
+    timeout: 180s
+
+  # completed 行可点（onClick=open chunks）→ 点【PDF 行】打开分块抽屉
+  - intent: 点 completed 的 PDF 行打开 chunks 抽屉
+    do: click
+    by: { testid: kb-item-row, has-text: "fp-f1-sample", attr: { data-status: completed } }
+
+  - check: visible
+    by: { testid: kb-chunk-panel }
+  - check: visible
+    by: { testid: kb-chunks-count }
+
+  # 至少 1 个分块卡 = 引擎真把 PDF 转出文本并分块（精确数不断言）
+  - intent: 至少 1 个分块卡
+    check: count
+    by: { testid: kb-chunk-card }
+    min: 1
