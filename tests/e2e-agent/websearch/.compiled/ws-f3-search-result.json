@@ -1,0 +1,222 @@
+{
+  "id": "ws-f3-search-result",
+  "title": "网络搜索真的跑完并返回结果（结果块信封）",
+  "tier": "full",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/full/WS-F3-search-result.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "do": "goto",
+        "nav": "assistants"
+      },
+      "label": "goto assistants",
+      "ok": true,
+      "resolved": {
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "text": "",
+        "selector": "#app-sidebar button at y~104"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "intent": "底部 picker 选网搜专用 assistant",
+        "do": "click",
+        "by": {
+          "data-slot": "popover-trigger"
+        }
+      },
+      "label": "select assistant picker",
+      "ok": true,
+      "resolved": {
+        "selector": "button[data-slot=\"popover-trigger\"] (assistant picker: text contains Assistant, bottom x<575)",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "popover-trigger",
+        "text": "💬\n💬\nE2E_Test_Assistant(no_vision)",
+        "rect": {
+          "x": 358,
+          "y": 355.390625,
+          "w": 211,
+          "h": 32
+        },
+        "actual": {
+          "clickedOption": "💬\nE2E_WebSearch_Test_Assistant",
+          "selected": "💬\n💬\nE2E_WebSearch_Test_Assistant",
+          "verified": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "option",
+          "has-text": "E2E_WebSearch_Test_Assistant"
+        }
+      },
+      "label": "click assistant option",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"option\"] >> text=E2E_WebSearch_Test_Assistant",
+        "found": true,
+        "role": "option",
+        "text": "💬\nE2E_WebSearch_Test_Assistant"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "intent": "在 Tiptap 输入带具体主题的 forcing prompt（同 WS-F1）",
+        "do": "type",
+        "by": {
+          "has-attr": "contenteditable"
+        },
+        "text": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+      },
+      "label": "type prompt",
+      "ok": true,
+      "resolved": {
+        "selector": "[contenteditable=\"true\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "text": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。",
+        "rect": {
+          "x": 351,
+          "y": 264,
+          "w": 575,
+          "h": 46
+        },
+        "actual": {
+          "typed": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "chat.input.send"
+        }
+      },
+      "label": "send",
+      "ok": true,
+      "resolved": {
+        "selector": "i[role=\"button\"][aria-label=\"发送\"] (visible instance)",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "I",
+        "role": "button",
+        "ariaLabel": "发送",
+        "dataSlot": null,
+        "text": "",
+        "rect": {
+          "x": 894,
+          "y": 313.296875,
+          "w": 22,
+          "h": 35.1875
+        }
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "intent": "先等工具调用折叠组出现（=≥1 工具被调，live 首个 ~37s）",
+        "check": "visible",
+        "by": {
+          "testid": "message-tool-history"
+        },
+        "timeout": "180s"
+      },
+      "label": "message tool history visible",
+      "ok": true,
+      "actual": {
+        "wallSec": 34.8,
+        "dataToolCount": "3",
+        "text": "web_fetch\n调用中"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"message-tool-history\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "text": "web_fetch\n调用中"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "intent": "点开 process-history 折叠（结果块嵌在其内，收起时不在 DOM）",
+        "do": "click",
+        "by": {
+          "testid": "message-tool-history"
+        }
+      },
+      "label": "expand message tool history",
+      "ok": true,
+      "actual": {
+        "ariaExpandedAfterClick": "true",
+        "text": "web_fetch\n调用中",
+        "dataToolCount": "3"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"message-tool-history\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "text": "web_fetch\n调用中"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "intent": "在展开的折叠内 poll 结果块（搜索 status=done 且有结果时才挂载）",
+        "check": "visible",
+        "by": {
+          "testid": "message-websearch-result"
+        },
+        "timeout": "240s"
+      },
+      "label": "websearch result visible",
+      "ok": true,
+      "actual": {
+        "wallSecAfterExpand": 0.0,
+        "wallSecFromSend": 35.1,
+        "dataResultCount": "5",
+        "visibleResultBlocks": 2,
+        "expandedStates": [
+          "true"
+        ],
+        "text": "OpenAI June 2026 new releases announcements\n5 个搜索结果"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"message-websearch-result\"]",
+        "found": true,
+        "visibleCount": 2,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "text": "OpenAI June 2026 new releases announcements\n5 个搜索结果"
+      }
+    }
+  ]
+}

@@ -50,7 +50,7 @@
 - **修正流**：picker 选 agent → 草稿框输入 → 发送（**不点全局「新建会话」**，它从全局最近 session 取种子会漂移到错的 agent）。
 - **gate**：同 WS-F1。
 
-### WS-F3 网络搜索真的跑完并返回结果（经典聊天 · 结果块）— ✅ live 校准（流程已纠正）· ⏳ 待 compile（`cases/full/WS-F3-search-result.yaml`）
+### WS-F3 网络搜索真的跑完并返回结果（经典聊天 · 结果块）— ✅ compile PASS（`cases/full/WS-F3-search-result.yaml` · `.compiled` 在库）
 - **tier**：full · **live**：`[llm, websearch]` · **prereq**：`golden-profile`
 - **真值**：assistant = `E2E_WebSearch_Test_Assistant`（同 WS-F1，`enableWebSearch=true`）。
 - **意图**：比 WS-F1 更进一步——不仅「工具被调」，而是 `web_search` **真完成且回了结果**（结果块 `MessageWebSearch` 渲染，`data-result-count` 实测 5）。
@@ -69,6 +69,5 @@
 
 ## 4. 待办
 
-1. ✅ **WS-F1 / WS-F2 完工**：编码 + compile PASS，`.compiled` 在库。
-2. ⏳ **WS-F3 待 live 校准**：本仓已加 `message-websearch-result` testid（+ 回归测试）；测试机重 build → 跑 WS-F1 同流、gate 换结果块 → 回报 testid 是否真现 + 时机 → 据此定 timeout、编码 YAML + compile。
-3. ⏳ 其余 full backlog（WS-M2b apikey 删除 CRUD / WS-M5c pin 不支持模型测 disabled 态）按需再做。
+1. ✅ **WS-F1 / WS-F2 / WS-F3 完工**：均编码 + compile PASS，`.compiled` 在库。WS-F3 实测工具 34.8s、展开后结果块 `data-result-count=5`。
+2. ⏳ 其余 full backlog（WS-M2b apikey 删除 CRUD / WS-M5c pin 不支持模型测 disabled 态）按需再做。
