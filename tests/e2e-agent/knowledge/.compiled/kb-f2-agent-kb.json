@@ -1,0 +1,134 @@
+{
+  "id": "kb-f2-agent-kb",
+  "title": "agent 真的检索知识库（agentic 信封）",
+  "tier": "full",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/full/KB-F2-agent-kb.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "do": "goto",
+        "nav": "agents"
+      },
+      "label": "goto agents",
+      "ok": true,
+      "resolved": {
+        "selector": "#app-sidebar button at y~160",
+        "found": true,
+        "tag": "BUTTON",
+        "text": "agents"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "data-slot": "popover-trigger"
+        }
+      },
+      "label": "select agent picker",
+      "ok": true,
+      "resolved": {
+        "selector": "button[data-slot=\"popover-trigger\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "dataSlot": "popover-trigger",
+        "text": "🤖 🤖 E2E_Knowledge_Test_Agent(no_vision)",
+        "actual": {
+          "clickedOption": "🤖 E2E_Knowledge_Test_Agent(no_vision)",
+          "selected": "E2E_Knowledge_Test_Agent(no_vision)",
+          "verified": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "option",
+          "has-text": "E2E_Knowledge_Test_Agent(no_vision)"
+        }
+      },
+      "label": "click agent option",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"option\"] >> text=E2E_Knowledge_Test_Agent(no_vision)",
+        "found": true,
+        "role": "option",
+        "text": "E2E_Knowledge_Test_Agent(no_vision)"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "type",
+        "by": {
+          "has-attr": "contenteditable"
+        },
+        "text": "在我的知识库里查一下 ${fixtures.recall-query} 相关内容并引用。"
+      },
+      "label": "type prompt",
+      "ok": true,
+      "resolved": {
+        "selector": "[contenteditable=\"true\"]",
+        "found": true,
+        "tag": "DIV",
+        "text": "在我的知识库里查一下 This sample document anchors the deterministic recall query for Cherry Studio knowledge tests. 相关内容并引用。",
+        "actual": {
+          "typed": "在我的知识库里查一下 This sample document anchors the deterministic recall query for Cherry Studio knowledge tests. 相关内容并引用。"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "chat.input.send"
+        }
+      },
+      "label": "send",
+      "ok": true,
+      "resolved": {
+        "selector": "i[role=\"button\"][aria-label=\"发送\"]",
+        "found": true,
+        "tag": "I",
+        "role": "button",
+        "ariaLabel": "发送"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "message-tool-history"
+        },
+        "timeout": "180s"
+      },
+      "label": "tool history visible",
+      "ok": true,
+      "actual": {
+        "wallSec": 4.062,
+        "dataToolCount": "1"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"message-tool-history\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "text": "cherry-tools : kb_search This sample document anchors the deterministic recall query for Cherry Studio knowledge tests 调用中",
+        "actual": {
+          "dataToolCount": "1",
+          "visibleCount": 3,
+          "baselineVisibleCount": 2
+        }
+      }
+    }
+  ]
+}

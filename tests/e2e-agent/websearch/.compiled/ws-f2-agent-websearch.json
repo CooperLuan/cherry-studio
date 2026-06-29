@@ -1,0 +1,133 @@
+{
+  "id": "ws-f2-agent-websearch",
+  "title": "agent 真的用网络搜索（agentic 信封）",
+  "tier": "full",
+  "domain": "websearch",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/websearch/cases/full/WS-F2-agent-websearch.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "do": "goto",
+        "nav": "agents"
+      },
+      "label": "goto agents",
+      "ok": true,
+      "resolved": {
+        "selector": "#app-sidebar button at y~160",
+        "found": true,
+        "tag": "BUTTON",
+        "text": "agents"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "data-slot": "popover-trigger"
+        }
+      },
+      "label": "select agent picker",
+      "ok": true,
+      "resolved": {
+        "selector": "button[data-slot=\"popover-trigger\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "dataSlot": "popover-trigger",
+        "text": "🤖 🤖 E2E_Test_Agents(no_vision)",
+        "actual": {
+          "clickedOption": "🤖 E2E_WebSearch_Test_Agent",
+          "selected": "E2E_WebSearch_Test_Agent",
+          "verified": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "option",
+          "has-text": "E2E_WebSearch_Test_Agent"
+        }
+      },
+      "label": "click agent option",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"option\"] >> text=E2E_WebSearch_Test_Agent",
+        "found": true,
+        "role": "option",
+        "text": "E2E_WebSearch_Test_Agent"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "do": "type",
+        "by": {
+          "has-attr": "contenteditable"
+        },
+        "text": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+      },
+      "label": "type prompt",
+      "ok": true,
+      "resolved": {
+        "selector": "[contenteditable=\"true\"]",
+        "found": true,
+        "tag": "DIV",
+        "text": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。",
+        "actual": {
+          "typed": "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "chat.input.send"
+        }
+      },
+      "label": "send",
+      "ok": true,
+      "resolved": {
+        "selector": "i[role=\"button\"][aria-label=\"发送\"]",
+        "found": true,
+        "tag": "I",
+        "role": "button",
+        "ariaLabel": "发送"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "message-tool-history"
+        },
+        "timeout": "180s"
+      },
+      "label": "tool history visible",
+      "ok": true,
+      "actual": {
+        "wallSec": 15.338,
+        "dataToolCount": "1"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"message-tool-history\"]",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "text": "cherry-tools : web_search 流式传输中",
+        "actual": {
+          "dataToolCount": "1",
+          "visibleCount": 1
+        }
+      }
+    }
+  ]
+}
