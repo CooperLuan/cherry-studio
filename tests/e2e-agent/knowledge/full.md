@@ -2,7 +2,7 @@
 
 > 域 spec 的 **full 层**，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**。
 > 与 [`light-medium.md`](light-medium.md)（KB 管理/索引/召回设置面）正交：本文件测「**assistant / agent 真的会调用知识库检索/管理工具**」——live、LLM+embedding，只断**工具触发的信封**。
-> **状态**：driving 锚点已 live 校准（同 websearch full）。golden 已 bake `E2E_Test_KB`（completed）。**KB-F1 + KB-F2 均 compile PASS**（`.compiled` 在库；KB-F1 在 #16345 并入后 kb_list 不再被 strict provider 拒，2.758s 出信封）；**KB-F3（上传文件→agent 加入 KB）⛔ 撞产品硬伤**——附件的路径/引用**根本没进 agent 上下文**，agent 无从调 kb_manage（§2，待用户定夺产品修复）。
+> **状态**：driving 锚点已 live 校准（同 websearch full）。golden 已 bake `E2E_Test_KB`（completed）。**KB-F1 + KB-F2 均 compile PASS**（`.compiled` 在库；KB-F1 在 #16345 并入后 kb_list 不再被 strict provider 拒，2.758s 出信封）；**KB-F3（上传文件→agent 加入 KB）⏸️ 暂缓（用户 2026-06-29 决定）**——blocked 于产品硬伤：附件的路径/引用**根本没进 agent 上下文**，agent 无从调 kb_manage（§2，产品修复后可重启）。
 > **分支前提**：本分支已 rebase 到 **#16345（PR C agent 工具面）之上** → `kb_search`/`kb_list`/`kb_read`/`kb_grep`/`kb_tree`/**`kb_manage`** 全部可用（KB-F3 依赖 `kb_manage`）。#16345 合 main 后本分支 rebase 到 main 即甩掉这层。
 
 ## 0. 表面与锚点（✅ 已 live 校准，复用 websearch full §0）
@@ -41,11 +41,11 @@
 - **修正流**：picker 选 agent → 草稿框输入 → 发送（**不点全局新建会话**，避免归属漂移到错的 agent——首测漂到了 websearch agent）。
 - **gate**：同 KB-F1。
 
-### KB-F3 agent 真的把上传的文件加进知识库（`/app/agents` · kb_manage）— ⛔ blocked（产品硬伤：附件不进 agent 上下文）
+### KB-F3 agent 真的把上传的文件加进知识库（`/app/agents` · kb_manage）— ⏸️ 暂缓（用户 2026-06-29）· blocked 于产品硬伤（附件不进 agent 上下文）
 - **tier**：full · **live**：`[llm]` · **prereq**：`golden-profile` + kb_manage-enabled agent + 目标 KB · **fixtures**：上传文件
 - **意图**：用户把文件附到 agent 输入框 → 说「把这个文件加到知识库」→ agent 调 `kb_manage(action=add, type=file, path=…)`。只断**信封：agent 调了 kb_manage**。
 - **⛔ live 校准实测（2026-06-29）= 不可行**：agent 配置正常（`disabled_tools=[]`、JSONL 暴露 `mcp__cherry-tools__kb_manage`），prompt 正常，但 **agent 根本没调 kb_manage**。~108s 后 process-history 32 工具调用 = `kb_list`×1 + `kb_tree`×1 + **`Bash`×30** + `Read`×1、**`kb_manage`×0**。**根因 = 产品硬伤,非 capability/非测试**：**上传文件的路径/引用根本没进 agent 可见上下文** —— SQLite `file_ref` 为空，两条 user message 只有纯文本「把刚上传的这个文件加到我的知识库里。」（**无** `ChannelMessageHandler` 那条 `[Attached files saved to workspace]` 路径追加），JSONL 里模型**明确表示看不到上传文件信息**、转而自己用 shell 满目录搜（30 次 Bash flail）。审批 UI 自然也没出现（kb_manage 没被调）。
-- **结论**：桌面 `AgentComposer` 接受附件(chip 显示 `span[role=button][aria-label="report.md"]`)但**发送时把文件引用丢了**（既不透路径、也不内联内容）→ agent 无从用 kb_manage。这是**缺失接线 / silent-drop**（推翻先前「ChannelMessageHandler 路径追加」的核实——那是 IM channel 流，桌面 agent 流不走它）。**待用户定夺**：① 产品修复（把上传附件的路径/`fileEntryId` 接进 agent 消息上下文）后本 case 才可测；② 暂缓 KB-F3；③ 若只想测 kb_manage 信封，可改测 **note/url 加入**（`kb_manage add type=note/url` 无需附件路径，现成可跑）。
+- **结论**：桌面 `AgentComposer` 接受附件(chip 显示 `span[role=button][aria-label="report.md"]`)但**发送时把文件引用丢了**（既不透路径、也不内联内容）→ agent 无从用 kb_manage。这是**缺失接线 / silent-drop**（推翻先前「ChannelMessageHandler 路径追加」的核实——那是 IM channel 流，桌面 agent 流不走它）。**用户 2026-06-29 决定暂缓（②）**。备选留档：① 产品修复（把上传附件的路径/`fileEntryId` 接进 agent 消息上下文）后本 case 即可测；③ 若只想覆盖 kb_manage 信封，可改测 **note/url 加入**（`kb_manage add type=note/url` 无需附件路径，现成可跑）。
 - **上传锚点（校准已得，留作日后）**：「+」opener=`button[aria-label="添加"][data-slot=dropdown-menu-trigger]`；菜单项=`[role=menuitem][aria-label="上传附件"][data-slot=dropdown-menu-item]`（无 testid）；上传后 chip=`span[role=button][aria-label="<文件名>"]`（无 testid）。原生框仍用 L2 的 osascript `pick-file`。
 
 ## 3. config 依赖
@@ -64,5 +64,5 @@
 ## 4. 待办
 
 1. ✅ **KB-F1 + KB-F2 完工**：编码 + compile PASS，`.compiled` 在库（`kb-f1-assistant-kb.json` / `kb-f2-agent-kb.json`）。
-2. ⛔ **KB-F3 blocked**（产品硬伤：上传附件路径不进 agent 上下文，agent 不调 kb_manage）→ **待用户定夺**：产品修复 / 暂缓 / 改测 note·url 加入。
+2. ⏸️ **KB-F3 暂缓**（用户 2026-06-29 决定）——blocked 于产品硬伤（上传附件路径不进 agent 上下文，agent 不调 kb_manage）；产品修复后可重启，锚点/复现路径已记 §2。
 3. ⏳ #16345 合 main 后：本分支 rebase 到 main，甩掉 PR C 那层，仅留 e2e 测试。
