@@ -13,7 +13,8 @@
 - **输入（✅ 确认）**：`[contenteditable="true"]`（`#inputbar` Tiptap，`ComposerSurface.tsx`）；实测可写入 `<p>...</p>`。
 - **发送（✅ 确认）**：`i[role="button"][aria-label=发送]`（i18n `chat.input.send`；Enter 亦发送）。
 - **信封（工具被调）**：assistant 路径**也走 process-history**（full-envelope-cal 实测 WS-F1 = 9 个工具调用折叠在 process-history，非 inline）→ **gate 同 §0.B 的 `[data-testid=message-tool-history]`**（统一）。
-- **结果块信封（WS-F3，更进一步）**：`web_search` 完成（`status='done'` 且结果数>0）时，`MessageWebSearch.tsx` 渲染一个**独立 ToolDisclosure**（平行于、**不在** process-history 折叠内），**工具一 done 即渲染、不等整轮 4 分钟完成**。本仓已给其根 `<div>` 加 **`data-testid="message-websearch-result"` + `data-result-count`**（仅 `hasResults` 时渲染 → 存在即「搜索跑完且有结果」，locale 无关）→ gate=`check: visible {testid: message-websearch-result}`。区别于 tool-history（=工具被调），结果块=**搜索真完成并回了结果**。
+- **结果块信封（WS-F3，更进一步）**：`web_search` 完成（`status='done'` 且结果数>0）时，`MessageWebSearch.tsx` 渲染一个 ToolDisclosure，本仓已给其根 `<div>` 加 **`data-testid="message-websearch-result"` + `data-result-count`**（仅 `hasResults` 时挂载 → 存在即「搜索跑完且有结果」，locale 无关）。区别于 tool-history（=工具被调），结果块=**搜索真完成并回了结果**。
+  - ⚠️ **live 校准（2026-06-29 ws-f3-rerun）纠正**：结果块**嵌在 process-history 折叠组内**（静态读码误判为「独立平行」——又一次被 live 推翻，同 WS-F2 信封）。折叠**收起时结果块不在 DOM** → gate **不能**直接等 `message-websearch-result`，须**先点开 `message-tool-history` 折叠**再 poll 结果块。实测：工具 36.9s 出现（count=2），展开后结果块 `data-result-count=5`。
 
 ### B. v2 agent（`/app/agents`，MCP 工具路径）
 - **入口**：`nav: agents` → 页容器 `#agent-page`。
@@ -49,14 +50,14 @@
 - **修正流**：picker 选 agent → 草稿框输入 → 发送（**不点全局「新建会话」**，它从全局最近 session 取种子会漂移到错的 agent）。
 - **gate**：同 WS-F1。
 
-### WS-F3 网络搜索真的跑完并返回结果（经典聊天 · 结果块）— 🆕 设计 · ⏳ 待 live 校准（`cases/full/WS-F3-search-result.yaml`）
+### WS-F3 网络搜索真的跑完并返回结果（经典聊天 · 结果块）— ✅ live 校准（流程已纠正）· ⏳ 待 compile（`cases/full/WS-F3-search-result.yaml`）
 - **tier**：full · **live**：`[llm, websearch]` · **prereq**：`golden-profile`
 - **真值**：assistant = `E2E_WebSearch_Test_Assistant`（同 WS-F1，`enableWebSearch=true`）。
-- **意图**：比 WS-F1 更进一步——不仅「工具被调」，而是 `web_search` **真完成且回了结果**（结果块 `MessageWebSearch` 渲染）。
-- **流程**：同 WS-F1（goto assistants → picker 选 assistant → 输入同一 forcing prompt → 发送），**gate 换成结果块**。
-- **gate**：`check: visible {testid: message-websearch-result} timeout: 240s`（结果块在工具 done 后即现，不等整轮完成；timeout 给足首个工具 ~70s + 搜索完成时间）。`data-result-count` 作观测、**不硬断 ≥N**（full=观测不赌成败；0 结果块不渲染=可观测的退化，写根因不当 CI 红）。
+- **意图**：比 WS-F1 更进一步——不仅「工具被调」，而是 `web_search` **真完成且回了结果**（结果块 `MessageWebSearch` 渲染，`data-result-count` 实测 5）。
+- **live 实测（ws-f3-rerun）**：✅ 工具 36.9s 出现（`message-tool-history` count=2）；结果块 `message-websearch-result`（count=5）**只在展开 `message-tool-history` 折叠后出现**——原 YAML 直接等结果块 → 241.5s 超时 FAIL。**已纠正流程**。
+- **流程（已纠正）**：goto assistants → picker 选 assistant → 输入 forcing prompt → 发送 → **等 `message-tool-history` 出现**（≤180s）→ **点开它** → **poll `message-websearch-result`**（≤240s）。
+- **gate**：`check: visible {testid: message-tool-history} timeout: 180s` → `do: click {testid: message-tool-history}` → `check: visible {testid: message-websearch-result} timeout: 240s`。`data-result-count` 作观测、**不硬断 ≥N**（full=观测不赌成败）。
 - **红线**：只断「结果块在场」（=搜索完成有结果，结构信号），**禁断**结果内容/排序/质量。
-- **校准要点**：① 实测 `message-websearch-result` 在搜完后真出现 + `data-result-count`；② 出现时机（工具 done 后多久）以定 timeout；③ assistant 模型这次是否真跑到搜索完成（minimax-m2.7 之前 ~70s 出工具）。
 
 ## 3. config 依赖（真值已填，golden 已 bake）
 
