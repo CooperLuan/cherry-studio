@@ -64,8 +64,15 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 ### Phase 4 — 汇报（对齐架构）
 
 - **全绿** → 飞书 IM 卡片 + Base 台账（tier/domain/ref/通过数/耗时）。
-- **有失败** → 另写飞书 Doc：复现步骤 + 逐步截图 + 诊断 + 漂移项；`full` 失败附根因。
+- **有失败** → 飞书发回失败告警：复现步骤 + 失败现场**截图（作图片消息/卡片附件）** + 诊断 + 漂移项；`full` 失败附根因。
 - **blocked/skipped** 单列，不计入 pass/fail，但在卡片注明。
+
+**失败告警发送机制（2026-06-29 实测打通）**：
+- 发到 **bridge chat**（即接收 `run` 指令、回结果的那个飞书群）。
+- ⚠️ **身份**：默认 `lark-cli` 身份**无权**发到 bridge chat → 必须用 **bridge codex profile 的 bot 配置**发送（否则被拒）。
+- **形态**：文字诊断走 post 消息；失败截图走 **image 消息**（先上传图片拿 image_key 再发）。两条独立消息可，或合成带图卡片。
+- 截图取 run 目录里那张 `<id>-FAIL-step-<n>.png`（repo 外，见 §3 不进仓）。
+- 具体 chat/message ID 属基础设施标识，**不写进仓库**（公开 repo）；维护者私存。
 
 ## DSL → agent-browser 绑定（**已绑定：fileprocessing 首跑 compile，2026-06-27**）
 
@@ -105,4 +112,5 @@ description: Run the project's deterministic agent-browser E2E cases (tests/e2e-
 - ✅ knowledge light（L1-L4）+ medium（M1-M5/M7）已 live 验证并编码（M6 暂缓，依赖 `packages/ui` 2B）。
 - ✅ **DSL → agent-browser 绑定表**已于 fileprocessing 首跑 compile 回填（见「DSL → agent-browser 绑定」节）。
 - ✅ fileprocessing（8）+ websearch（9）`.compiled/<id>.json` 已由首跑 compile 产出入 repo；knowledge 待首跑产出。
-- ⏳ 飞书 IM 卡片 / Base 台账 / 失败 Doc 的具体模板对齐 bridge 输出格式。
+- ✅ **失败告警链路已打通**（2026-06-29）：bridge bot 身份向 bridge chat 发「文字诊断 post + 失败截图 image 消息」实测成功（见 Phase 4「失败告警发送机制」）。
+- ⏳ 全绿 IM 卡片 / Base 台账 的具体模板仍待对齐 bridge 输出格式（失败告警已落地，富文本卡片模板待定）。
