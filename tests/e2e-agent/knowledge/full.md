@@ -2,7 +2,7 @@
 
 > 域 spec 的 **full 层**，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**。
 > 与 [`light-medium.md`](light-medium.md)（KB 管理/索引/召回设置面）正交：本文件测「**assistant / agent 真的会调用知识库检索/管理工具**」——live、LLM+embedding，只断**工具触发的信封**。
-> **状态**：driving 锚点已 live 校准（同 websearch full）。golden 已 bake `E2E_Test_KB`（completed）。**KB-F2 已 compile PASS**（`.compiled` 在库）；**KB-F1 已解锁**（kb_list strict bug 修复随 #16345 整支并入本分支，见 §2/§4）待重 compile；**KB-F3（上传文件→agent 加入 KB）新增设计**，待 live 校准（§2）。
+> **状态**：driving 锚点已 live 校准（同 websearch full）。golden 已 bake `E2E_Test_KB`（completed）。**KB-F1 + KB-F2 均 compile PASS**（`.compiled` 在库；KB-F1 在 #16345 并入后 kb_list 不再被 strict provider 拒，2.758s 出信封）；**KB-F3（上传文件→agent 加入 KB）⛔ 撞产品硬伤**——附件的路径/引用**根本没进 agent 上下文**，agent 无从调 kb_manage（§2，待用户定夺产品修复）。
 > **分支前提**：本分支已 rebase 到 **#16345（PR C agent 工具面）之上** → `kb_search`/`kb_list`/`kb_read`/`kb_grep`/`kb_tree`/**`kb_manage`** 全部可用（KB-F3 依赖 `kb_manage`）。#16345 合 main 后本分支 rebase 到 main 即甩掉这层。
 
 ## 0. 表面与锚点（✅ 已 live 校准，复用 websearch full §0）
@@ -27,11 +27,11 @@
 
 ## 2. 用例
 
-### KB-F1 assistant 真的检索知识库（经典聊天）— ✅ 已编码 · 🔓 已解锁（待重 compile）（`cases/full/KB-F1-assistant-kb.yaml`）
+### KB-F1 assistant 真的检索知识库（经典聊天）— ✅ 已编码 · ✅ compile PASS（`cases/full/KB-F1-assistant-kb.yaml`）
 - **tier**：full · **live**：`[llm, embedding]` · **prereq**：`golden-profile` + `completed-base`
 - **真值**：assistant = `E2E_Knowledge_Test_Assistant(no_vision)` / `5e6b5dab-596c-4e63-b637-aa33aae44d5d`（`glm-5.2`），已挂 `E2E_Test_KB`。
 - **full-envelope-cal 实测**：❌ **0 工具**，180s timeout。provider 报 `Tool 0 function has invalid 'parameters' schema: None is not of type 'array'`。
-- **根因（真 bug）**：`kb_list` 入参全 optional + `strict:true` → `required` 序列化成 `null` → 严格 provider 拒整请求。同模型 glm-5.2 在 KB-F2（agent/MCP 非 strict）能调 kb_list。**已修**：#16345 整支并入本分支（kb_list 拆成 strict + MCP 双 schema，`27a9ee8fd`）→ strict 路径 `required` 为合法数组。待测试机 reset 新 tip + 重 build + compile 转绿。
+- **根因（真 bug）**：`kb_list` 入参全 optional + `strict:true` → `required` 序列化成 `null` → 严格 provider 拒整请求。同模型 glm-5.2 在 KB-F2（agent/MCP 非 strict）能调 kb_list。**已修**：#16345 整支并入本分支（kb_list 拆成 strict + MCP 双 schema，`27a9ee8fd`）→ strict 路径 `required` 为合法数组。**✅ 已验证转绿**：2026-06-29 compile PASS，assistant 调 `kb_list`、2.758s 出信封、`data-tool-count=1`、baseline=0。
 - **gate**：`check: visible {testid: message-tool-history} timeout: 180s`。
 
 ### KB-F2 agent 真的检索知识库（`/app/agents`）— ✅ 已编码（`cases/full/KB-F2-agent-kb.yaml`）
@@ -41,13 +41,12 @@
 - **修正流**：picker 选 agent → 草稿框输入 → 发送（**不点全局新建会话**，避免归属漂移到错的 agent——首测漂到了 websearch agent）。
 - **gate**：同 KB-F1。
 
-### KB-F3 agent 真的把上传的文件加进知识库（`/app/agents` · kb_manage）— 🆕 设计 · ⏳ 待 live 校准
-- **tier**：full · **live**：`[llm]`（仅需 LLM 推理；加入 KB 的索引另算，gate 不赌）· **prereq**：`golden-profile` + **kb_manage-enabled agent** + 目标 KB · **fixtures**：`[sample-md]`（要上传的文件）
-- **意图**：用户把文件附到 agent 输入框 → 说「把这个文件加到知识库」→ agent 调 `kb_manage(action=add, type=file, path=…)`。只断**信封：agent 调了 kb_manage**，不赌文件真被索引（红线）。
-- **链路（已核实）**：附件落 agent 工作目录、其**绝对路径以纯文本追加进用户消息**（`ChannelMessageHandler` 的 `[Attached files saved to workspace]`）→ 模型读出路径喂 `kb_manage`。**非结构化接线 → 靠模型推理**；模型不调 = capability 缺口（只记录，[[agent-tool-bug-vs-model-capability]]），非工具 bug。
-- **流程**：goto agents → picker 选 kb_manage-enabled agent（同 KB-F2 修正流，不点全局新建会话）→ 「+」菜单 → `Upload attachment`（i18n `chat.input.upload.attachment`）→ **osascript `pick-file` 喂 `${fixtures.sample-md}` 绝对路径**（同 L2，原生框逃生口）→ 草稿框输入「把刚上传的这个文件加到我的知识库里」→ 发送。
-- **gate（待校准定）**：`kb_manage` 需审批（`needsApproval:true`，**唯一需审批的 KB 工具** → 审批态本身即「是 kb_manage」的强信号）。两选一：① `message-tool-history` 在场（≥1 工具，不区分具体工具）；② **审批请求 UI 在场**（kb_manage 专属，但当前**无稳定 testid**，由 AI-SDK `ToolUIPart` `approval-requested` 态渲染）。**校准要回答**：审批态 DOM 锚是什么？是否需照 `message-tool-history` 先例**加一个 testid**？run 是否真停在审批待确认？
-- **开放问题（校准解）**：①桌面 agent 流是否确把上传文件的绝对路径透给模型（vs 已核实的 channel 流）；②模型是否可靠地抽路径 + 调 kb_manage；③审批 UI 锚点；④哪个 agent 启用了 kb_manage（设置里开 builtin-tool 开关 / golden bake）。
+### KB-F3 agent 真的把上传的文件加进知识库（`/app/agents` · kb_manage）— ⛔ blocked（产品硬伤：附件不进 agent 上下文）
+- **tier**：full · **live**：`[llm]` · **prereq**：`golden-profile` + kb_manage-enabled agent + 目标 KB · **fixtures**：上传文件
+- **意图**：用户把文件附到 agent 输入框 → 说「把这个文件加到知识库」→ agent 调 `kb_manage(action=add, type=file, path=…)`。只断**信封：agent 调了 kb_manage**。
+- **⛔ live 校准实测（2026-06-29）= 不可行**：agent 配置正常（`disabled_tools=[]`、JSONL 暴露 `mcp__cherry-tools__kb_manage`），prompt 正常，但 **agent 根本没调 kb_manage**。~108s 后 process-history 32 工具调用 = `kb_list`×1 + `kb_tree`×1 + **`Bash`×30** + `Read`×1、**`kb_manage`×0**。**根因 = 产品硬伤,非 capability/非测试**：**上传文件的路径/引用根本没进 agent 可见上下文** —— SQLite `file_ref` 为空，两条 user message 只有纯文本「把刚上传的这个文件加到我的知识库里。」（**无** `ChannelMessageHandler` 那条 `[Attached files saved to workspace]` 路径追加），JSONL 里模型**明确表示看不到上传文件信息**、转而自己用 shell 满目录搜（30 次 Bash flail）。审批 UI 自然也没出现（kb_manage 没被调）。
+- **结论**：桌面 `AgentComposer` 接受附件(chip 显示 `span[role=button][aria-label="report.md"]`)但**发送时把文件引用丢了**（既不透路径、也不内联内容）→ agent 无从用 kb_manage。这是**缺失接线 / silent-drop**（推翻先前「ChannelMessageHandler 路径追加」的核实——那是 IM channel 流，桌面 agent 流不走它）。**待用户定夺**：① 产品修复（把上传附件的路径/`fileEntryId` 接进 agent 消息上下文）后本 case 才可测；② 暂缓 KB-F3；③ 若只想测 kb_manage 信封，可改测 **note/url 加入**（`kb_manage add type=note/url` 无需附件路径，现成可跑）。
+- **上传锚点（校准已得，留作日后）**：「+」opener=`button[aria-label="添加"][data-slot=dropdown-menu-trigger]`；菜单项=`[role=menuitem][aria-label="上传附件"][data-slot=dropdown-menu-item]`（无 testid）；上传后 chip=`span[role=button][aria-label="<文件名>"]`（无 testid）。原生框仍用 L2 的 osascript `pick-file`。
 
 ## 3. config 依赖
 
@@ -64,7 +63,6 @@
 
 ## 4. 待办
 
-1. ✅ golden bake + 校准 + 编码（KB-F1/KB-F2 已落 `cases/full/`）；KB-F2 已 compile PASS（`.compiled` 在库）。
-2. 🔓 **KB-F1 已解锁**（kb_list 修复随 #16345 整支并入本分支）→ 测试机 reset 到新 tip + 重 build → compile KB-F1 产 `.compiled`。
-3. ⏳ **KB-F3 待 live 校准**（kb_manage 现已在本分支）：测试机驱动「上传→提示→发送」流，回报审批态锚点 + 模型是否调 kb_manage → 据此定 gate（可能加审批 testid）→ 再编码 YAML + compile。
-4. ⏳ #16345 合 main 后：本分支 rebase 到 main，甩掉 PR C 那层，仅留 e2e 测试。
+1. ✅ **KB-F1 + KB-F2 完工**：编码 + compile PASS，`.compiled` 在库（`kb-f1-assistant-kb.json` / `kb-f2-agent-kb.json`）。
+2. ⛔ **KB-F3 blocked**（产品硬伤：上传附件路径不进 agent 上下文，agent 不调 kb_manage）→ **待用户定夺**：产品修复 / 暂缓 / 改测 note·url 加入。
+3. ⏳ #16345 合 main 后：本分支 rebase 到 main，甩掉 PR C 那层，仅留 e2e 测试。
