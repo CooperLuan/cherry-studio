@@ -1,0 +1,204 @@
+{
+  "id": "fp-f1-pdf-ingest",
+  "title": "配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）",
+  "tier": "full",
+  "domain": "fileprocessing",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/fileprocessing/cases/full/FP-F1-pdf-ingest.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "intent": "打开数据源菜单（toolbar Add）",
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.data_source.toolbar.add"
+        }
+      },
+      "label": "open data source menu",
+      "ok": true,
+      "resolved": {
+        "selector": "button (visible text contains \"添加数据源\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "text": "添加数据源"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "intent": "选 file 源 → 立即弹原生 OS 文件框",
+        "do": "click",
+        "by": {
+          "role": "menuitem",
+          "i18n": "knowledge.data_source.add_dialog.sources.file"
+        }
+      },
+      "label": "select file source",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"menuitem\"] >> text=文件",
+        "found": true,
+        "tag": "BUTTON",
+        "role": "menuitem",
+        "ariaLabel": null,
+        "text": "文件"
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "intent": "用 osascript 在原生「打开」框喂入 PDF fixture 绝对路径",
+        "do": "shell",
+        "osascript": "pick-file",
+        "path": "${fixtures.sample-pdf}"
+      },
+      "label": "pick PDF fixture",
+      "ok": true,
+      "actual": {
+        "fixture": "sample-pdf",
+        "nativeDialogTitle": "打开Cherry Studio"
+      },
+      "resolved": {
+        "selector": "macOS native open dialog",
+        "found": true,
+        "text": "fp-f1-sample.pdf"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "intent": "轮询 PDF 行（按文件名锚定，避开既有 sample.md 行）到 completed",
+        "check": "attr",
+        "by": {
+          "testid": "kb-item-row",
+          "has-text": "fp-f1-sample"
+        },
+        "attr": "data-status",
+        "equals": "completed",
+        "timeout": "180s"
+      },
+      "label": "pdf row completed",
+      "ok": true,
+      "actual": {
+        "attr": "data-status",
+        "value": "completed",
+        "wallSec": 16,
+        "dbItemSeconds": 21.667,
+        "statusTransitions": [
+          "processing",
+          "completed"
+        ],
+        "text": "fp-f1-sample.pdf 文件 就绪 此刻"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"] (has text \"fp-f1-sample\")",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "text": "fp-f1-sample.pdf 文件 就绪 此刻"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "点 completed 的 PDF 行打开 chunks 抽屉",
+        "do": "click",
+        "by": {
+          "testid": "kb-item-row",
+          "has-text": "fp-f1-sample",
+          "attr": {
+            "data-status": "completed"
+          }
+        }
+      },
+      "label": "open PDF chunks",
+      "ok": true,
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"][data-status=\"completed\"] (has text \"fp-f1-sample\")",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "text": "fp-f1-sample.pdf 文件 就绪 此刻"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "kb-chunk-panel"
+        }
+      },
+      "label": "chunk panel visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunk-panel\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "kb-chunks-count"
+        }
+      },
+      "label": "chunk count visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1,
+        "text": "1 chunks"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunks-count\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": null,
+        "text": "1 chunks"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "intent": "至少 1 个分块卡",
+        "check": "count",
+        "by": {
+          "testid": "kb-chunk-card"
+        },
+        "min": 1
+      },
+      "label": "chunk card count",
+      "ok": true,
+      "actual": {
+        "count": 1,
+        "min": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunk-card\"]",
+        "found": true,
+        "visibleCount": 1,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "text": "Cherry Studio FP-F1 PDF fixture - deterministic text for MinerU conversion."
+      }
+    }
+  ]
+}

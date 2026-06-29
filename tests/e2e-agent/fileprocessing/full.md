@@ -1,9 +1,9 @@
-# File Processing E2E — full（live·跨域观测）规格（SoT · live 校准通过 · 待 compile）
+# File Processing E2E — full（live·跨域观测）规格（SoT · FP-F1 compile PASS）
 
 > 域 spec 的 **full 层**，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**。
 > 与 [`light-medium.md`](light-medium.md)（设置页配置面，离线）正交：本文件测「**配置的解析引擎真的能把文件转换出来**」——live、调真实远程引擎、只能**跨 `knowledge` 域间接观测**。
 > **本质边界**：文件处理的「转换」（文档→Markdown / 图片→文本）在**主进程**执行、renderer 不暴露转换过程 → 没有 assistant/agent 信封可测（不同于 KB/web search 的 full）。**唯一确定性观测口 = KB 摄入**：往知识库加一个**需要转换的文件**（PDF），看它经 `document_to_markdown` 转换 → 索引 → item 到 `completed` + 出 chunk。
-> **状态**：FP-F1 **live 校准通过**（2026-06-29 `wsf3-fpf1`：MinerU key 活、21.6s 到 `completed`、chunk=1，锚点全验证）+ **YAML 已编码**；**待测试机 compile**（须先 bake golden `E2E_Test_KB.fileProcessorId=mineru` + 落稳定 PDF fixture，见 §3）。
+> **状态**：FP-F1 **compile PASS**（2026-06-29，`.compiled` 在库）。golden 已 bake `E2E_Test_KB.file_processor_id=mineru`（测试机备份 `golden-profileDev.bak-20260629-fpf1-mineru` 后只改这一项）；PDF fixture `fp-f1-sample.pdf` 已落测试机 fixtures 目录 + secrets.local.json。实测 processing→completed 16s、chunk=1、`has-text:"fp-f1-sample"` 锚定正确（未误匹配 sample.md）。
 
 ## 0. 表面与锚点（复用 KB light L2/L3，已校准）
 
@@ -21,7 +21,7 @@
 
 ## 2. 用例
 
-### FP-F1 配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）— ✅ live 校准通过 · ⏳ 待 compile（`cases/full/FP-F1-pdf-ingest.yaml`）
+### FP-F1 配置的解析引擎真能把 PDF 转换并索引（经 KB 摄入）— ✅ compile PASS（`cases/full/FP-F1-pdf-ingest.yaml` · `.compiled` 在库）
 - **tier**：full · **live**：`[file-processing, embedding]` · **prereq**：`golden-profile` + `pdf-processor-base`（`E2E_Test_KB` 已 bake `fileProcessorId=mineru`，活 key）+ `${fixtures.sample-pdf}`
 - **意图**：往配了 `document_to_markdown(mineru)` 的 KB 加 PDF → 引擎真转成 Markdown → 分块嵌入 → item `completed` + chunk≥1。文件处理「真转换」**唯一**可确定性观测的路径。
 - **live 实测（wsf3-fpf1）**：✅ MinerU key/服务可用；加 1 页 PDF → **21.6s 到 `completed`**（remote-poll 17.1s + index 1.5s）；`kb-item-row[data-status=completed]` + `kb-chunks-count=1` + `kb-chunk-card`×1，chunk 文本含「deterministic text for MinerU conversion」。
@@ -39,6 +39,5 @@
 
 ## 4. 待办
 
-1. ✅ FP-F1 live 校准通过 + YAML 已编码（`cases/full/FP-F1-pdf-ingest.yaml`）+ `sample-pdf` 入 secrets.example。
-2. ⏳ **compile 前置（测试机）**：① bake golden `E2E_Test_KB.file_processor_id=mineru`；② 落稳定 PDF fixture（`fp-f1-sample.pdf`）+ 在 secrets.local.json 填 `fixtures.sample-pdf`；③ compile FP-F1 → 产 `.compiled`。
-3. ⏳ backlog（按需）：**FP-M2b**（apikey 删除 CRUD，用无 golden key 的 mistral/open-mineru 空列表隔离 + close→reopen 观测 count，绕开弹窗快照不重渲染）；**FP-F2**（图片 OCR，image_to_text；observability 待定，macOS `system`/Vision 可离线但 KB 是否对图片走 OCR 未确认）。
+1. ✅ **FP-F1 完工**：编码 + golden bake + PDF fixture + compile PASS，`.compiled` 在库。
+2. ⏳ backlog（按需）：**FP-M2b**（apikey 删除 CRUD，用无 golden key 的 mistral/open-mineru 空列表隔离 + close→reopen 观测 count，绕开弹窗快照不重渲染）；**FP-F2**（图片 OCR，image_to_text；observability 待定，macOS `system`/Vision 可离线但 KB 是否对图片走 OCR 未确认）。
