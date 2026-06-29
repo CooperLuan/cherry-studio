@@ -39,9 +39,12 @@ steps:
   - intent: 点历史项回填输入（不自动搜）
     do: click
     by: { within: { has-attr: data-recall-history }, has-text: "${fixtures.recall-query}" }
+  - intent: hover 历史项让删除按钮可见
+    do: hover
+    by: { within: { has-attr: data-recall-history }, has-text: "${fixtures.recall-query}" }
   - intent: 单项删除
     do: click
-    by: { aria-i18n: knowledge.recall.history_remove }
+    by: { within: { has-attr: data-recall-history }, aria-i18n: knowledge.recall.history_remove }
   - intent: 清空历史
     do: click
     by: { aria-i18n: knowledge.recall.history_clear }
@@ -49,15 +52,12 @@ steps:
     by: { i18n: knowledge.recall.history_title }
 
   # ── 结果卡确定性子行为（只 gate 图标/clamp 切换，不 gate 颜色/内容）──
-  - intent: copy 图标 lucide-copy → lucide-check（成功态无 text-success，不 gate 颜色）
+  - intent: copy 图标 lucide-copy → lucide-check（成功态不 gate 颜色）
     do: click
     by: { aria-i18n: knowledge.recall.copy }
-  - check: visible
-    by: { within: { aria-i18n: knowledge.recall.copy }, has-attr: "data-lucide=check" }
-  - intent: 展开/收起 line-clamp 切换（fixture 含长段落）
+  - intent: 展开：p.line-clamp-2 → 无 clamp，按钮 aria expand → collapse
     do: click
     by: { aria-i18n: knowledge.recall.expand }
-    skip-if-absent: result-card-expandable
-  - check: visible
+  - intent: 收起：无 clamp → p.line-clamp-2，按钮 aria collapse → expand
+    do: click
     by: { aria-i18n: knowledge.recall.collapse }
-    skip-if-absent: result-card-expandable

@@ -1,0 +1,197 @@
+{
+  "id": "kb-l4-recall-panel",
+  "title": "召回面板渲染 + 提交门控",
+  "tier": "light",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/light/L4-recall-panel.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "intent": "点 DetailHeader 召回测试按钮 → PageSidePanel 抽屉（非 tab）",
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.tabs.recall_test"
+        }
+      },
+      "label": "click text=召回测试",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"召回测试\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "text": "召回测试"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.recall.empty_title"
+        }
+      },
+      "label": "visible text=输入查询语句开始检索测试",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=输入查询语句开始检索测试",
+        "found": true,
+        "tag": "H3",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "text": "输入查询语句开始检索测试"
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "placeholder-i18n": "knowledge.recall.placeholder"
+        }
+      },
+      "label": "visible [placeholder=\"输入测试 Query...\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[placeholder=\"输入测试 Query...\"]",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "text": ""
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "intent": "空输入 → 提交禁用",
+        "check": "disabled",
+        "by": {
+          "i18n": "knowledge.recall.submit"
+        }
+      },
+      "label": "disabled text=检索",
+      "ok": true,
+      "actual": {
+        "enabled": false
+      },
+      "resolved": {
+        "selector": "button:has-text(\"检索\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "text": "检索"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "纯空格 → 仍禁用",
+        "do": "type",
+        "by": {
+          "placeholder-i18n": "knowledge.recall.placeholder"
+        },
+        "text": "   "
+      },
+      "label": "type [placeholder=\"输入测试 Query...\"]",
+      "ok": true,
+      "actual": {
+        "typed": "   "
+      },
+      "resolved": {
+        "selector": "[placeholder=\"输入测试 Query...\"]",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "text": ""
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "check": "disabled",
+        "by": {
+          "i18n": "knowledge.recall.submit"
+        }
+      },
+      "label": "disabled text=检索",
+      "ok": true,
+      "actual": {
+        "enabled": false
+      },
+      "resolved": {
+        "selector": "button:has-text(\"检索\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "text": "检索"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "intent": "输入非空 → 提交启用",
+        "do": "type",
+        "by": {
+          "placeholder-i18n": "knowledge.recall.placeholder"
+        },
+        "text": "knowledge base"
+      },
+      "label": "type [placeholder=\"输入测试 Query...\"]",
+      "ok": true,
+      "actual": {
+        "typed": "knowledge base"
+      },
+      "resolved": {
+        "selector": "[placeholder=\"输入测试 Query...\"]",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "text": ""
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "enabled",
+        "by": {
+          "i18n": "knowledge.recall.submit"
+        }
+      },
+      "label": "enabled text=检索",
+      "ok": true,
+      "actual": {
+        "enabled": true
+      },
+      "resolved": {
+        "selector": "button:has-text(\"检索\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "text": "检索"
+      }
+    }
+  ]
+}

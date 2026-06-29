@@ -1,0 +1,125 @@
+{
+  "id": "kb-l3-index-chunks",
+  "title": "索引到 completed + 看分块",
+  "tier": "light",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/light/L3-index-chunks.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "intent": "有界轮询 item 状态到 completed（locale 无关 data-*）",
+        "check": "attr",
+        "by": {
+          "testid": "kb-item-row"
+        },
+        "attr": "data-status",
+        "equals": "completed",
+        "timeout": "120s"
+      },
+      "label": "attr [data-testid=\"kb-item-row\"] data-status=completed",
+      "ok": true,
+      "actual": {
+        "attr": "data-status",
+        "value": "completed"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"]",
+        "found": true,
+        "tag": "DIV",
+        "role": "row",
+        "ariaLabel": "查看「sample.md」的 Chunks",
+        "dataSlot": "context-menu-trigger",
+        "text": "sample.md\n文件\n就绪\n此刻"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "intent": "点击 completed 行直接打开 chunks 抽屉",
+        "do": "click",
+        "by": {
+          "attr": {
+            "data-status": "completed"
+          },
+          "testid": "kb-item-row"
+        }
+      },
+      "label": "click [data-testid=\"kb-item-row\"][data-status=\"completed\"]",
+      "ok": true,
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"][data-status=\"completed\"]:has-text(\"sample.md\")",
+        "found": false
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "kb-chunk-panel"
+        }
+      },
+      "label": "visible [data-testid=\"kb-chunk-panel\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunk-panel\"]",
+        "found": true,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "text": "sample.md\n1 chunks\n1\n117 tokens\n\n# Cherry Studio Knowledge E2E Sample This sample document anchors the deterministic recall query for Cherry Studio knowledge tests. The indexing check should find this paragraph after the file is added to a "
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "testid": "kb-chunks-count"
+        }
+      },
+      "label": "visible [data-testid=\"kb-chunks-count\"]",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunks-count\"]",
+        "found": true,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "text": "1 chunks"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "至少 1 个分块卡（精确数不断言）",
+        "check": "count",
+        "by": {
+          "testid": "kb-chunk-card"
+        },
+        "min": 1
+      },
+      "label": "count [data-testid=\"kb-chunk-card\"] >= 1",
+      "ok": true,
+      "actual": {
+        "count": 1,
+        "min": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-chunk-card\"]",
+        "found": true,
+        "visibleCount": 1
+      }
+    }
+  ]
+}

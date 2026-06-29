@@ -1,0 +1,280 @@
+{
+  "id": "kb-m2-conflict-dialog",
+  "title": "同名冲突对话框（全部保留 / 替换 / 取消）",
+  "tier": "medium",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/medium/M2-conflict-dialog.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "intent": "加入 dupe/a/report.md",
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.data_source.toolbar.add"
+        }
+      },
+      "label": "open add data source menu",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"添加数据源\")",
+        "found": true,
+        "text": "添加数据源"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "menuitem",
+          "i18n": "knowledge.data_source.add_dialog.sources.file"
+        }
+      },
+      "label": "choose file source",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"menuitem\"]:has-text(\"文件\")",
+        "found": true,
+        "text": "文件"
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "shell",
+        "osascript": "pick-file",
+        "path": "${fixtures.dupe-a}"
+      },
+      "label": "robust picker dupe-a/report.md",
+      "ok": true,
+      "resolved": {
+        "selector": "native macOS open dialog: wait title -> Cmd+Shift+G -> paste path -> explicit Open",
+        "found": true,
+        "text": "report.md"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "check": "count",
+        "by": {
+          "testid": "kb-item-row",
+          "has-text": "report.md"
+        },
+        "min": 1
+      },
+      "label": "report row count after first add",
+      "ok": true,
+      "actual": {
+        "count": 1
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"]:has-text(\"report.md\")",
+        "found": true,
+        "tag": "DIV",
+        "role": "row",
+        "ariaLabel": null,
+        "dataSlot": "context-menu-trigger",
+        "testid": "kb-item-row",
+        "dataStatus": "embedding",
+        "text": "report.md\n文件\n嵌入中\n此刻"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "intent": "再加同 basename 的 dupe/b/report.md → 触发冲突对话框",
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.data_source.toolbar.add"
+        }
+      },
+      "label": "open add data source menu again",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"添加数据源\")",
+        "found": true,
+        "text": "添加数据源"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "role": "menuitem",
+          "i18n": "knowledge.data_source.add_dialog.sources.file"
+        }
+      },
+      "label": "choose file source again",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"menuitem\"]:has-text(\"文件\")",
+        "found": true,
+        "text": "文件"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "do": "shell",
+        "osascript": "pick-file",
+        "path": "${fixtures.dupe-b}"
+      },
+      "label": "robust picker dupe-b/report.md",
+      "ok": true,
+      "resolved": {
+        "selector": "native macOS open dialog: wait title -> Cmd+Shift+G -> paste path -> explicit Open",
+        "found": true,
+        "text": "report.md"
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.data_source.add_dialog.conflict_dialog.title"
+        }
+      },
+      "label": "conflict dialog visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=存在同名数据源",
+        "found": true,
+        "tag": "H2",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "dialog-title",
+        "testid": null,
+        "dataStatus": null,
+        "text": "存在同名数据源"
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "intent": "三操作按钮在场（全部保留 / 替换 / 取消）",
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.data_source.add_dialog.conflict_dialog.keep_all"
+        }
+      },
+      "label": "button visible 全部保留",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "button:has-text(\"全部保留\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "全部保留"
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.data_source.add_dialog.conflict_dialog.replace"
+        }
+      },
+      "label": "button visible 替换",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "button:has-text(\"替换\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "替换"
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "common.cancel"
+        }
+      },
+      "label": "button visible 取消",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "button:has-text(\"取消\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "取消"
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "intent": "「全部保留」→ 两条同名 report 数据源共存",
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.data_source.add_dialog.conflict_dialog.keep_all"
+        }
+      },
+      "label": "click keep all",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"全部保留\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "全部保留"
+      }
+    },
+    {
+      "index": 12,
+      "yaml": {
+        "check": "count",
+        "by": {
+          "testid": "kb-item-row",
+          "has-text": "report"
+        },
+        "min": 2
+      },
+      "label": "report rows coexist after keep all",
+      "ok": true,
+      "actual": {
+        "count": 2
+      },
+      "resolved": {
+        "selector": "[data-testid=\"kb-item-row\"]:has-text(/report/)",
+        "found": true,
+        "text": "report rows"
+      }
+    }
+  ]
+}

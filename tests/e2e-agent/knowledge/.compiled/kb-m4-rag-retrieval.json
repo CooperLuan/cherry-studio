@@ -1,0 +1,264 @@
+{
+  "id": "kb-m4-rag-retrieval",
+  "title": "RAG 检索条件字段显隐",
+  "tier": "medium",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/medium/M4-rag-retrieval.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "aria-i18n": "knowledge.tabs.rag_config"
+        }
+      },
+      "label": "open RAG config panel",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"dialog\"]:has-text(\"RAG 配置\")",
+        "found": true,
+        "tag": "ASIDE",
+        "role": "dialog",
+        "ariaLabel": null,
+        "dataSlot": "page-side-panel",
+        "testid": null,
+        "dataStatus": null,
+        "text": "RAG 配置\n文档处理\n未设置\n智能分段\n分隔符\n分段大小\ntokens\n重叠大小\ntokens\n\n分块设置的修改只针对新添加的内容有效\n\n嵌入模型\nqwen/qwen3-embedding-0.6b\n请求文档片段数 (Top K)\n6\n1\n50\n检索模式\n混合检索（推荐）\nHybrid Alpha\n0.5\n0.0\n1"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "intent": "documentCount slider 恒显",
+        "check": "visible",
+        "by": {
+          "aria-i18n": "knowledge.rag.document_count"
+        }
+      },
+      "label": "document count slider visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"请求文档片段数 (Top K)\"]",
+        "found": true,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": "请求文档片段数 (Top K)",
+        "dataSlot": "slider",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "intent": "searchMode=vector → threshold 显, hybrid_alpha 隐",
+        "do": "select",
+        "by": {
+          "field-i18n": "knowledge.rag.search_mode.title"
+        },
+        "option": "vector"
+      },
+      "label": "select vector search mode",
+      "ok": true,
+      "resolved": {
+        "selector": "button[role=\"combobox\"] -> [role=\"option\"]:has-text(\"向量检索\")",
+        "found": true,
+        "text": "向量检索"
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "aria-i18n": "knowledge.rag.threshold"
+        }
+      },
+      "label": "threshold visible in vector mode",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"相似度阈值\"]",
+        "found": true,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": "相似度阈值",
+        "dataSlot": "slider",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "aria-i18n": "knowledge.rag.hybrid_alpha"
+        }
+      },
+      "label": "hybrid alpha hidden in vector mode",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"Hybrid Alpha\"]",
+        "found": false
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "intent": "searchMode=hybrid → hybrid_alpha 显, threshold 隐（无 rerank）",
+        "do": "select",
+        "by": {
+          "field-i18n": "knowledge.rag.search_mode.title"
+        },
+        "option": "hybrid"
+      },
+      "label": "select hybrid search mode",
+      "ok": true,
+      "resolved": {
+        "selector": "button[role=\"combobox\"] -> [role=\"option\"]:has-text(\"混合检索（推荐）\")",
+        "found": true,
+        "text": "混合检索（推荐）"
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "aria-i18n": "knowledge.rag.hybrid_alpha"
+        }
+      },
+      "label": "hybrid alpha visible in hybrid mode",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"Hybrid Alpha\"]",
+        "found": true,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": "Hybrid Alpha",
+        "dataSlot": "slider",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "aria-i18n": "knowledge.rag.threshold"
+        }
+      },
+      "label": "threshold hidden in hybrid mode without rerank",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"相似度阈值\"]",
+        "found": false
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "intent": "searchMode=bm25 + 无 rerank → threshold 隐",
+        "do": "select",
+        "by": {
+          "field-i18n": "knowledge.rag.search_mode.title"
+        },
+        "option": "bm25"
+      },
+      "label": "select bm25 search mode",
+      "ok": true,
+      "resolved": {
+        "selector": "button[role=\"combobox\"] -> [role=\"option\"]:has-text(\"全文检索\")",
+        "found": true,
+        "text": "全文检索"
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "aria-i18n": "knowledge.rag.threshold"
+        }
+      },
+      "label": "threshold hidden in bm25 mode without rerank",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"相似度阈值\"]",
+        "found": false
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "intent": "选 rerank 模型 → threshold 重现（rerankModelId!==null）",
+        "do": "pick-model",
+        "by": {
+          "aria-i18n": "knowledge.rag.rerank_model"
+        },
+        "model": "${secrets.rerankModelId}",
+        "skip-if-absent": "secrets.rerankModelId"
+      },
+      "label": "pick rerank model",
+      "ok": true,
+      "actual": {
+        "modelId": "${secrets.rerankModelId}"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"model-selector-item-4fccad36-da77-487c-b1b6-9e9f913a76d7::BAAI/bge-reranker-v2-m3\"]",
+        "found": true,
+        "text": "${secrets.rerankModelId}"
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "aria-i18n": "knowledge.rag.threshold"
+        },
+        "skip-if-absent": "secrets.rerankModelId"
+      },
+      "label": "threshold visible after rerank selected",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "[data-slot=\"slider\"][aria-label=\"相似度阈值\"]",
+        "found": true,
+        "tag": "SPAN",
+        "role": null,
+        "ariaLabel": "相似度阈值",
+        "dataSlot": "slider",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    }
+  ]
+}

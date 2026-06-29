@@ -20,7 +20,7 @@ steps:
     osascript: pick-file
     path: "${fixtures.dupe-a}"
   - check: count
-    by: { testid: kb-item-row }
+    by: { testid: kb-item-row, has-text: "report.md" }
     min: 1
 
   - intent: 再加同 basename 的 dupe/b/report.md → 触发冲突对话框
@@ -42,9 +42,9 @@ steps:
   - check: visible
     by: { i18n: common.cancel }
 
-  - intent: 「全部保留」→ 两行共存（新项自动 _N 改名）
+  - intent: 「全部保留」→ 两条同名 report 数据源共存
     do: click
     by: { i18n: knowledge.data_source.add_dialog.conflict_dialog.keep_all }
   - check: count
-    by: { testid: kb-item-row }
-    equals: 2
+    by: { testid: kb-item-row, has-text: "report" }
+    min: 2

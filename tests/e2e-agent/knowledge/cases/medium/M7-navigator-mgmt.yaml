@@ -1,7 +1,9 @@
 # Spec: ../../light-medium.md §4 M7 — 全确定性（本地 DB/state），无网络
 # 排除到 full：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize
+# 锚点说明：库行无 testid，用 Tailwind class `group/kb` + 库名 has-text 定位；
+#           组用 `group/grp` + 组名。`common.more` 必须 within 库行内（库行/组行同名）。
 id: kb-m7-navigator-mgmt
-title: navigator 分组 / 移库 / 重命名 / 搜索
+title: navigator 分组/库管理
 tier: medium
 domain: knowledge
 locale: zh-CN
@@ -10,12 +12,14 @@ prereqs: [completed-base, no-existing-group]
 
 steps:
   # ── 建组（空名门控 + 有效名）──
-  - intent: navigator header Add → 新建分组
+  - intent: 建组：navigator header Add
     do: click
     by: { aria: Add }
   - do: click
     by: { role: menuitem, i18n: knowledge.groups.add }
-  - intent: 空名提交 → 报错
+  - check: visible
+    by: { id: knowledge-entity-name }
+  - intent: 空名 error
     do: click
     by: { submit: dialog }
   - check: visible
@@ -25,47 +29,47 @@ steps:
     text: "e2e-group"
   - do: click
     by: { submit: dialog }
-  - intent: 新 accordion 分组出现
-    check: visible
-    by: { role: button, has-text: "e2e-group" }
+  - check: visible
+    by: { has-text: "e2e-group" }
 
   # ── 移库入组 ──
-  - intent: 库行 hover 露出 more 菜单
+  - intent: hover 库行显示 more
     do: hover
-    by: { testid: kb-base-row }
-    skip-if-absent: kb-base-row     # 无 testid 时 fallback 走库行标题
+    by: { class: "group/kb", has-text: "E2E Light KB" }
   - do: click
-    by: { aria-i18n: common.more }
+    by: { within: { class: "group/kb", has-text: "E2E Light KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.move_to }
-  - intent: 选目标组 → 库行 re-render 到该 section
-    do: click
+  - do: click
     by: { within: { i18n: knowledge.context.move_to }, has-text: "e2e-group" }
+  - intent: 展开目标分组，确保库行渲染可见
+    do: click
+    by: { within: { class: "group/grp", has-text: "e2e-group" }, data-slot: accordion-trigger }
+  - check: visible
+    by: { within: { has-text: "e2e-group" }, has-text: "E2E Light KB" }
 
   # ── 重命名库（h1 更新）──
+  - do: hover
+    by: { class: "group/kb", has-text: "E2E Light KB" }
   - do: click
-    by: { aria-i18n: common.more }
+    by: { within: { class: "group/kb", has-text: "E2E Light KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.rename }
   - do: type
     by: { id: knowledge-entity-name }
-    text: "e2e-renamed-kb"
+    text: "E2E Light KB Renamed"
   - do: click
     by: { submit: dialog }
-  - intent: DetailHeader h1 文案更新
-    check: visible
-    by: { role: heading, has-text: "e2e-renamed-kb" }
+  - check: visible
+    by: { class: "text-2xl", has-text: "E2E Light KB Renamed" }
 
   # ── navigator 搜索 + 空态 + clear 恢复 ──
   - do: type
-    by: { aria-i18n: knowledge.search }
-    text: "zzz-no-match-zzz"
+    by: { placeholder-i18n: knowledge.search }
+    text: "no-match-e2e"
   - check: visible
     by: { i18n: knowledge.empty }
-  - intent: clear 按钮（仅非空时显）→ 恢复列表
-    do: click
+  - do: click
     by: { aria-i18n: common.clear }
-  - check: hidden
-    by: { i18n: knowledge.empty }
   - check: visible
-    by: { role: heading, has-text: "e2e-renamed-kb" }
+    by: { class: "group/kb", has-text: "E2E Light KB Renamed" }

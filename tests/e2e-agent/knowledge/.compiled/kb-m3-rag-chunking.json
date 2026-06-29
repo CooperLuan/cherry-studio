@@ -1,0 +1,421 @@
+{
+  "id": "kb-m3-rag-chunking",
+  "title": "RAG 分块校验 + dirty/save 门控",
+  "tier": "medium",
+  "domain": "knowledge",
+  "locale": "zh-CN",
+  "source": "tests/e2e-agent/knowledge/cases/medium/M3-rag-chunking.yaml",
+  "steps": [
+    {
+      "index": 0,
+      "yaml": {
+        "intent": "打开 RAG 配置抽屉（DetailHeader SlidersHorizontal）",
+        "do": "click",
+        "by": {
+          "aria-i18n": "knowledge.tabs.rag_config"
+        }
+      },
+      "label": "open RAG config panel",
+      "ok": true,
+      "resolved": {
+        "selector": "[role=\"dialog\"]:has-text(\"RAG 配置\")",
+        "found": true,
+        "tag": "ASIDE",
+        "role": "dialog",
+        "ariaLabel": null,
+        "dataSlot": "page-side-panel",
+        "testid": null,
+        "dataStatus": null,
+        "text": "RAG 配置\n文档处理\n未设置\n智能分段\n分隔符\n分段大小\ntokens\n重叠大小\ntokens\n\n分块设置的修改只针对新添加的内容有效\n\n嵌入模型\nqwen/qwen3-embedding-0.6b\n请求文档片段数 (Top K)\n6\n1\n50\n检索模式\n混合检索（推荐）\nHybrid Alpha\n0.5\n0.0\n1"
+      }
+    },
+    {
+      "index": 1,
+      "yaml": {
+        "intent": "overlap >= size → 错误 + Save 禁用",
+        "do": "type",
+        "by": {
+          "field-i18n": "knowledge.rag.chunk_size"
+        },
+        "text": "256"
+      },
+      "label": "set chunk size 256",
+      "ok": true,
+      "actual": {
+        "typed": "256"
+      },
+      "resolved": {
+        "selector": "[data-slot=\"page-side-panel\"] input[inputmode=\"numeric\"] >> nth=0",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 2,
+      "yaml": {
+        "do": "type",
+        "by": {
+          "field-i18n": "knowledge.rag.chunk_overlap"
+        },
+        "text": "256"
+      },
+      "label": "set chunk overlap 256",
+      "ok": true,
+      "actual": {
+        "typed": "256"
+      },
+      "resolved": {
+        "selector": "[data-slot=\"page-side-panel\"] input[inputmode=\"numeric\"] >> nth=1",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 3,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.rag.chunk_overlap_must_be_smaller"
+        }
+      },
+      "label": "overlap error visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=分块重叠必须小于分块大小",
+        "found": true,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "testid": null,
+        "dataStatus": null,
+        "text": "分块重叠必须小于分块大小"
+      }
+    },
+    {
+      "index": 4,
+      "yaml": {
+        "check": "disabled",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save disabled with invalid overlap",
+      "ok": true,
+      "actual": {
+        "disabled": true
+      },
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "保存"
+      }
+    },
+    {
+      "index": 5,
+      "yaml": {
+        "intent": "overlap < size → 错误消失 + Save 启用",
+        "do": "type",
+        "by": {
+          "field-i18n": "knowledge.rag.chunk_overlap"
+        },
+        "text": "64"
+      },
+      "label": "set chunk overlap 64",
+      "ok": true,
+      "actual": {
+        "typed": "64"
+      },
+      "resolved": {
+        "selector": "[data-slot=\"page-side-panel\"] input[inputmode=\"numeric\"] >> nth=1",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 6,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "i18n": "knowledge.rag.chunk_overlap_must_be_smaller"
+        }
+      },
+      "label": "overlap error hidden",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "text=分块重叠必须小于分块大小",
+        "found": false
+      }
+    },
+    {
+      "index": 7,
+      "yaml": {
+        "check": "enabled",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save enabled after valid overlap",
+      "ok": true,
+      "actual": {
+        "enabled": true
+      },
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "保存"
+      }
+    },
+    {
+      "index": 8,
+      "yaml": {
+        "intent": "空 chunk_size → Save 禁用",
+        "do": "type",
+        "by": {
+          "field-i18n": "knowledge.rag.chunk_size"
+        },
+        "text": ""
+      },
+      "label": "clear chunk size",
+      "ok": true,
+      "actual": {
+        "typed": ""
+      },
+      "resolved": {
+        "selector": "[data-slot=\"page-side-panel\"] input[inputmode=\"numeric\"] >> nth=0",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 9,
+      "yaml": {
+        "check": "disabled",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save disabled with empty chunk size",
+      "ok": true,
+      "actual": {
+        "disabled": true
+      },
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "保存"
+      }
+    },
+    {
+      "index": 10,
+      "yaml": {
+        "intent": "恢复有效值 → 保存 → toast → Save 回禁用",
+        "do": "type",
+        "by": {
+          "field-i18n": "knowledge.rag.chunk_size"
+        },
+        "text": "512"
+      },
+      "label": "restore valid chunk size 512",
+      "ok": true,
+      "actual": {
+        "typed": "512"
+      },
+      "resolved": {
+        "selector": "[data-slot=\"page-side-panel\"] input[inputmode=\"numeric\"] >> nth=0",
+        "found": true,
+        "tag": "INPUT",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "input",
+        "testid": null,
+        "dataStatus": null,
+        "text": ""
+      }
+    },
+    {
+      "index": 11,
+      "yaml": {
+        "do": "click",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save RAG config",
+      "ok": true,
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "保存"
+      }
+    },
+    {
+      "index": 12,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.rag.saved"
+        }
+      },
+      "label": "saved toast visible",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "text=已保存",
+        "found": true,
+        "tag": "DIV",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": null,
+        "testid": null,
+        "dataStatus": null,
+        "text": "已保存"
+      }
+    },
+    {
+      "index": 13,
+      "yaml": {
+        "check": "disabled",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save disabled after save",
+      "ok": true,
+      "actual": {
+        "disabled": true
+      },
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "保存"
+      }
+    },
+    {
+      "index": 14,
+      "yaml": {
+        "intent": "改 embedding 模型 → 主按钮文案 save_action → restore.submit（只断言文案，不点）",
+        "do": "pick-model",
+        "by": {
+          "aria-i18n": "knowledge.rag.embedding_model"
+        },
+        "model": "${secrets.secondEmbeddingModelId}"
+      },
+      "label": "pick second embedding model",
+      "ok": true,
+      "actual": {
+        "modelId": "${secrets.secondEmbeddingModelId}"
+      },
+      "resolved": {
+        "selector": "[data-testid=\"model-selector-item-4fccad36-da77-487c-b1b6-9e9f913a76d7::baai/bge-m3\"]",
+        "found": true,
+        "text": "${secrets.secondEmbeddingModelId}"
+      }
+    },
+    {
+      "index": 15,
+      "yaml": {
+        "check": "visible",
+        "by": {
+          "i18n": "knowledge.restore.submit"
+        }
+      },
+      "label": "restore submit visible after embedding model change",
+      "ok": true,
+      "actual": {
+        "visibleCount": 1
+      },
+      "resolved": {
+        "selector": "button:has-text(\"重建\")",
+        "found": true,
+        "tag": "BUTTON",
+        "role": null,
+        "ariaLabel": null,
+        "dataSlot": "button",
+        "testid": null,
+        "dataStatus": null,
+        "text": "重建"
+      }
+    },
+    {
+      "index": 16,
+      "yaml": {
+        "check": "hidden",
+        "by": {
+          "i18n": "knowledge.rag.save_action"
+        }
+      },
+      "label": "save action hidden after embedding model change",
+      "ok": true,
+      "actual": {
+        "visibleCount": 0
+      },
+      "resolved": {
+        "selector": "button:has-text(\"保存\")",
+        "found": false
+      }
+    }
+  ]
+}
