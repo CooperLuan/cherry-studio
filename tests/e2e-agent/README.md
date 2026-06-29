@@ -154,4 +154,5 @@ steps:
   - **knowledge**：11 个 light/medium case 已 live 验证并编码（light L1-L4 · medium M1-M5/M7；M6 暂缓，依赖 2B/`packages/ui`）。
   - **websearch**：9 个 light/medium case 已 live 校准并编码，**全 9 PASS**（light L1-L4 · medium M1-M5；M5 首版 disabled-gate 因 golden 活动模型支持 web search 而 FAIL→转向 enable/disable toggle 并复跑确认；删除 CRUD/disabled-state/真实搜索 推 full M2b/M5c/M6）。见 [`websearch/light-medium.md`](websearch/light-medium.md)。
   - **fileprocessing（文档解析）**：8 个 light/medium case 已 live 校准并编码（light L1-L4 · medium M1-M4；设置页配置面，真实转换 renderer 不可见→推 full；M2 弹窗快照不重渲染→只测 add+空值拒绝+cancel，真实 CRUD 推 full M2b）。见 [`fileprocessing/light-medium.md`](fileprocessing/light-medium.md)。
+  - **full（agentic·live）**：4 个 case 已编码 —— `websearch/full.md`（WS-F1/F2）+ `knowledge/full.md`（KB-F1/F2），测「assistant/agent 真的调用 web_search/kb_search」。gate = `[data-testid=message-tool-history]`（process-history 组存在 = ≥1 工具被调；`collapse-content-*` suffix 是动态调用 ID 不可作锚）。WS-F1/F2/KB-F2 实测已触发；**KB-F1 ⛔ 挂 `kb_list` strict schema 修复（独立 PR）**。
   - `.compiled/` 待测试机首跑 compile 后回填（各域皆是）。

@@ -1,0 +1,31 @@
+# Spec: ../../full.md §2 KB-F2 — agent 真的调用 kb_search（full·live·agentic）
+# 修正流：picker 选 agent → 草稿框输入 → 发送（不点全局新建会话，避免归属漂移到错的 agent）。
+# agent kb_search scope=all bases，golden 有 E2E_Test_KB（completed）即可命中，无需 per-agent 挂。
+# 信封 = [data-testid=message-tool-history]。实测：kb_list 触发 + 命中 E2E_Test_KB（~23s）。
+id: kb-f2-agent-kb
+title: agent 真的检索知识库（agentic 信封）
+tier: full
+domain: knowledge
+locale: zh-CN
+live: [llm, embedding]
+prereqs: [golden-profile, completed-base]
+fixtures: [recall-query]
+
+steps:
+  - do: goto
+    nav: agents
+  - intent: /app/agents 底部 picker 选 KB 专用 agent（设草稿 session 的 agent）
+    do: click
+    by: { data-slot: popover-trigger }
+  - do: click
+    by: { role: option, has-text: "E2E_Knowledge_Test_Agent(no_vision)" }
+  - intent: 草稿框输入强制查知识库的 prompt（不点全局新建会话）
+    do: type
+    by: { has-attr: contenteditable }
+    text: "在我的知识库里查一下 ${fixtures.recall-query} 相关内容并引用。"
+  - do: click
+    by: { aria-i18n: chat.input.send }
+  - intent: 等并断言工具调用信封
+    check: visible
+    by: { testid: message-tool-history }
+    timeout: 180s

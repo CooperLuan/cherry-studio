@@ -1,0 +1,33 @@
+# Spec: ../../full.md §2 KB-F1 — assistant 真的调用 kb_search（full·live·agentic）
+# ⛔ BLOCKED：依赖 kb_list strict schema 修复（独立 PR）。当前严格 provider(glm-5.2) 拒绝整请求
+#       「Tool 0 function has invalid 'parameters' schema: None is not of type 'array'」→ 0 工具。
+#       根因：kb_list 入参全 optional + strict:true → required 序列化成 null（见 full.md §0/根因）。
+#       修复合并后本 case 转绿；首跑 compile 暂跳过本 case（见 full.md §4）。
+# 信封 = [data-testid=message-tool-history]；golden 已挂 E2E_Test_KB。
+id: kb-f1-assistant-kb
+title: assistant 真的检索知识库（agentic 信封）
+tier: full
+domain: knowledge
+locale: zh-CN
+live: [llm, embedding]
+prereqs: [golden-profile, completed-base]
+fixtures: [recall-query]
+
+steps:
+  - do: goto
+    nav: assistants
+  - intent: 底部 picker 选 KB 专用 assistant（已挂 E2E_Test_KB）
+    do: click
+    by: { data-slot: popover-trigger }
+  - do: click
+    by: { role: option, has-text: "E2E_Knowledge_Test_Assistant(no_vision)" }
+  - intent: 输入强制查知识库的 prompt（含库内已知词，断言不依赖命中）
+    do: type
+    by: { has-attr: contenteditable }
+    text: "在我的知识库里查一下 ${fixtures.recall-query} 相关内容并引用。"
+  - do: click
+    by: { aria-i18n: chat.input.send }
+  - intent: 等并断言工具调用信封（kb_search 被调即渲染 process-history）
+    check: visible
+    by: { testid: message-tool-history }
+    timeout: 180s

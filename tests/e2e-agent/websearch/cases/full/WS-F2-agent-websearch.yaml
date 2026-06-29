@@ -1,0 +1,33 @@
+# Spec: ../../full.md §2 WS-F2 — agent 真的调用 web_search（full·live·agentic）
+# 修正流：picker 选 agent → 直接在草稿框输入 → 发送。**不点全局「新建会话」**——它从
+#       全局最近 session 取种子，会漂移到错的 agent（见 KB-F2 教训）；picker 的 onChange
+#       把草稿 session 的 agent 设为所选，发送即建该 agent 的 session。
+# 信封同 WS-F1：[data-testid=message-tool-history]（≥1 工具被调）。
+# 实测：工具真触发（Claude JSONL = mcp__cherry-tools__web_search），process-history 27 工具调用。
+id: ws-f2-agent-websearch
+title: agent 真的用网络搜索（agentic 信封）
+tier: full
+domain: websearch
+locale: zh-CN
+live: [llm, websearch]
+prereqs: [golden-profile]
+fixtures: []
+
+steps:
+  - do: goto
+    nav: agents
+  - intent: /app/agents 底部 picker 选网搜专用 agent（设草稿 session 的 agent）
+    do: click
+    by: { data-slot: popover-trigger }
+  - do: click
+    by: { role: option, has-text: "E2E_WebSearch_Test_Agent" }
+  - intent: 草稿框输入 forcing prompt（不点全局新建会话）
+    do: type
+    by: { has-attr: contenteditable }
+    text: "用网络搜索查一下 2026 年 6 月 OpenAI 有哪些新发布，并给出来源链接。"
+  - do: click
+    by: { aria-i18n: chat.input.send }
+  - intent: 等并断言工具调用信封
+    check: visible
+    by: { testid: message-tool-history }
+    timeout: 180s
