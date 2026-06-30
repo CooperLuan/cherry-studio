@@ -57,6 +57,15 @@
 > - **M1 解耦**：去掉 `after: kb-l4-recall-panel`（M1 不复用 L4 数据，却继承其召回抽屉脏态）→ 改独立自导航。
 > - **L1 结果锚点**：弃 `bg-secondary`（选中态在 navigator 行**内层** div，runner 取 `kb-base-row` 外层取不到）→ 改断 **DetailHeader 标题 `h1.text-2xl` = 探针库名**（库已打开等价证明）。
 > - **L2 计数收窄**：`kb-item-row` 裸 `min:1` 在 completed-base 上 vacuous（E2E_Test_KB 已有 1 物料）→ 按 `has-text:"sample"` 收窄到新增行。
+>
+> ⚠️ **2026-06-30 第二轮（导航修复后暴露的更深漂移 / 行为约束，HEAD `cbcd8f92f` 复跑：knowledge 2 PASS / 7 FAIL / 1 BLOCKED）**：导航前置已生效（不再 step0 失败）；websearch 9/9、fileprocessing 8/8 全绿。knowledge 余项修复：
+> - **M1（非产品 bug）**：`AddKnowledgeItemDialogFooter` 的 Add 确实 `disabled={!canSubmit}`；`{i18n: common.add}` 误命中页面 toolbar「添加数据源」（含「添加」、常 enabled）→ 改 `{within:{data-slot:dialog-content}, role:button, i18n:common.add}` scope 进对话框。
+> - **M3/M4（field-i18n 无从关联）**：`RagInlineField`/`RagSelectField` 的 Input/SelectTrigger 无 id、label 是独立 `<span>` 不带 htmlFor → 加 **KB-local id**（§2A）：`kb-rag-chunk-size` / `kb-rag-chunk-overlap` / `kb-rag-search-mode`，YAML 由 `field-i18n` 改 `id`。
+> - **M5（真行为约束）**：`selectHistory` 内 `setIsHistoryOpen(false)`（`RecallTestProvider.tsx`）→ 选中历史项即收起面板 → 原 hover/单删步够不到 `data-recall-history`。重排为：选中→断「面板收起」→重新聚焦展开→hover 单删→删空收起；clear-all（需 ≥2 条）推 full。
+> - **M7**：`move_to` 是 radix **submenu**，子项 e2e-group 在独立 popper（非嵌在 trigger 内）→ step13 改 `{role:menuitem, has-text:"e2e-group"}`。
+> - **L2/L3/M2（native picker，owner=false）**：osascript 找不到原生「打开」框（DOM 无 overlay 属正常——原生窗非页面 DOM）→ **测试机侧排查**（原生框是否真弹/窗口标题/归属进程），非 YAML/产品可修。
+>
+> KB-local id 补丁动了 `ragConfig/{panelPrimitives,ChunkingSection,RetrievalSection}.tsx`（可选 `inputId`/`triggerId` 转发到 Input/SelectTrigger，外科级）。
 
 ---
 

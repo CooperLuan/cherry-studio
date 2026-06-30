@@ -35,6 +35,8 @@ steps:
     timeout: 60s
 
   # ── 历史 CRUD（全确定性，本地态）──
+  # selectHistory 会 setIsHistoryOpen(false)（RecallTestProvider.tsx）→ 选中即收起面板；故先验「选中→回填+收起」，
+  # 再重新聚焦展开 → hover 单删 → 删空即收起。仅 1 条历史，clear-all 与单删二选一（取单删），clear-all 推 full。
   - intent: focus 输入 → 历史面板展开（query 已入首位）
     do: click
     by: { placeholder-i18n: knowledge.recall.placeholder }
@@ -42,18 +44,23 @@ steps:
     by: { has-attr: data-recall-history }
   - check: visible
     by: { i18n: knowledge.recall.history_title }
-  - intent: 点历史项回填输入（不自动搜）
+  - intent: 点历史项 → 回填输入且面板收起（不自动搜）
     do: click
     by: { within: { has-attr: data-recall-history }, has-text: "${fixtures.recall-query}" }
+  - intent: 选中即收起（selectHistory→setIsHistoryOpen(false)）
+    check: hidden
+    by: { has-attr: data-recall-history }
+  - intent: 重新聚焦 → 历史面板再展开
+    do: click
+    by: { placeholder-i18n: knowledge.recall.placeholder }
+  - check: visible
+    by: { has-attr: data-recall-history }
   - intent: hover 历史项让删除按钮可见
     do: hover
     by: { within: { has-attr: data-recall-history }, has-text: "${fixtures.recall-query}" }
-  - intent: 单项删除
+  - intent: 单项删除 → 删空 → 面板/标题消失
     do: click
     by: { within: { has-attr: data-recall-history }, aria-i18n: knowledge.recall.history_remove }
-  - intent: 清空历史
-    do: click
-    by: { aria-i18n: knowledge.recall.history_clear }
   - check: hidden
     by: { i18n: knowledge.recall.history_title }
 

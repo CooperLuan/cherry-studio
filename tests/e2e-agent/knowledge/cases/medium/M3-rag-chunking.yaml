@@ -20,10 +20,10 @@ steps:
 
   - intent: overlap >= size → 错误 + Save 禁用
     do: type
-    by: { field-i18n: knowledge.rag.chunk_size }
+    by: { id: kb-rag-chunk-size }            # field-i18n 无从关联（label 是独立 span 无 htmlFor）→ 用 KB-local id（§2A）
     text: "256"
   - do: type
-    by: { field-i18n: knowledge.rag.chunk_overlap }
+    by: { id: kb-rag-chunk-overlap }
     text: "256"
   - check: visible
     by: { i18n: knowledge.rag.chunk_overlap_must_be_smaller }
@@ -32,7 +32,7 @@ steps:
 
   - intent: overlap < size → 错误消失 + Save 启用
     do: type
-    by: { field-i18n: knowledge.rag.chunk_overlap }
+    by: { id: kb-rag-chunk-overlap }
     text: "64"
   - check: hidden
     by: { i18n: knowledge.rag.chunk_overlap_must_be_smaller }
@@ -41,14 +41,14 @@ steps:
 
   - intent: 空 chunk_size → Save 禁用
     do: type
-    by: { field-i18n: knowledge.rag.chunk_size }
+    by: { id: kb-rag-chunk-size }            # field-i18n 无从关联（label 是独立 span 无 htmlFor）→ 用 KB-local id（§2A）
     text: ""
   - check: disabled
     by: { i18n: knowledge.rag.save_action }
 
   - intent: 恢复有效值 → 保存 → toast → Save 回禁用
     do: type
-    by: { field-i18n: knowledge.rag.chunk_size }
+    by: { id: kb-rag-chunk-size }            # field-i18n 无从关联（label 是独立 span 无 htmlFor）→ 用 KB-local id（§2A）
     text: "512"
   - do: click
     by: { i18n: knowledge.rag.save_action }

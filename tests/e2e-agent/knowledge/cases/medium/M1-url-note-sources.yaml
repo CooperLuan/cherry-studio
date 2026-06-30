@@ -23,14 +23,14 @@ steps:
   - do: click
     by: { role: menuitem, i18n: knowledge.data_source.add_dialog.sources.url }
   - check: disabled
-    by: { i18n: common.add }
+    by: { within: { data-slot: dialog-content }, role: button, i18n: common.add }   # scope 进对话框：页面 toolbar「添加数据源」也含「添加」且常 enabled，会误命中
   - do: type
     by: { id: knowledge-source-url-input }
     text: "https://example.com"
   - check: enabled
-    by: { i18n: common.add }
+    by: { within: { data-slot: dialog-content }, role: button, i18n: common.add }   # scope 进对话框：页面 toolbar「添加数据源」也含「添加」且常 enabled，会误命中
   - do: click
-    by: { i18n: common.add }
+    by: { within: { data-slot: dialog-content }, role: button, i18n: common.add }   # scope 进对话框：页面 toolbar「添加数据源」也含「添加」且常 enabled，会误命中
   - intent: URL 行出现（类型列「URL/链接」）
     check: visible
     by: { i18n: knowledge.data_source.filters.url }
@@ -46,9 +46,9 @@ steps:
     do: click
     by: { within: { testid: knowledge-source-note-list }, role: listitem, has-text: "e2e-seed-note" }
   - check: enabled
-    by: { i18n: common.add }
+    by: { within: { data-slot: dialog-content }, role: button, i18n: common.add }   # scope 进对话框：页面 toolbar「添加数据源」也含「添加」且常 enabled，会误命中
   - do: click
-    by: { i18n: common.add }
+    by: { within: { data-slot: dialog-content }, role: button, i18n: common.add }   # scope 进对话框：页面 toolbar「添加数据源」也含「添加」且常 enabled，会误命中
   - intent: 笔记行出现（类型列「笔记」）
     check: visible
     by: { i18n: knowledge.data_source.filters.note }

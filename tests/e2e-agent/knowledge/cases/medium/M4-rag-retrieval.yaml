@@ -22,7 +22,7 @@ steps:
 
   - intent: searchMode=vector → threshold 显, hybrid_alpha 隐
     do: select
-    by: { field-i18n: knowledge.rag.search_mode.title }
+    by: { id: kb-rag-search-mode }           # field-i18n 无从关联 → 用 KB-local id（§2A），SelectTrigger 同 ws-l4 套路
     option: vector
   - check: visible
     by: { aria-i18n: knowledge.rag.threshold }
@@ -31,7 +31,7 @@ steps:
 
   - intent: searchMode=hybrid → hybrid_alpha 显, threshold 隐（无 rerank）
     do: select
-    by: { field-i18n: knowledge.rag.search_mode.title }
+    by: { id: kb-rag-search-mode }           # field-i18n 无从关联 → 用 KB-local id（§2A），SelectTrigger 同 ws-l4 套路
     option: hybrid
   - check: visible
     by: { aria-i18n: knowledge.rag.hybrid_alpha }
@@ -40,7 +40,7 @@ steps:
 
   - intent: searchMode=bm25 + 无 rerank → threshold 隐
     do: select
-    by: { field-i18n: knowledge.rag.search_mode.title }
+    by: { id: kb-rag-search-mode }           # field-i18n 无从关联 → 用 KB-local id（§2A），SelectTrigger 同 ws-l4 套路
     option: bm25
   - check: hidden
     by: { aria-i18n: knowledge.rag.threshold }

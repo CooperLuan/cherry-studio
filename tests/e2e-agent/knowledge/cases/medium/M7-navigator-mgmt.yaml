@@ -50,8 +50,9 @@ steps:
     by: { within: { testid: "kb-base-row", has-text: "E2E_Test_KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.move_to }
-  - do: click
-    by: { within: { i18n: knowledge.context.move_to }, has-text: "e2e-group" }
+  - intent: 选子菜单里的 e2e-group（move_to 是 radix submenu，子项在独立 popper，非嵌在 trigger 内）
+    do: click
+    by: { role: menuitem, has-text: "e2e-group" }
   - intent: 展开目标分组，确保库行渲染可见
     do: click
     by: { within: { class: "group/grp", has-text: "e2e-group" }, data-slot: accordion-trigger }
