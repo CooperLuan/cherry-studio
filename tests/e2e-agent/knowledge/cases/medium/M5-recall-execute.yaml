@@ -50,9 +50,9 @@ steps:
   - intent: 选中即收起（selectHistory→setIsHistoryOpen(false)）
     check: hidden
     by: { has-attr: data-recall-history }
-  - intent: 重新聚焦 → 历史面板再展开
+  - intent: 点历史切换按钮重开面板（input 选中后仍 focused，再点 input 不触发 onFocus；toggle 按钮 aria-label=history_title）
     do: click
-    by: { placeholder-i18n: knowledge.recall.placeholder }
+    by: { aria-i18n: knowledge.recall.history_title }
   - check: visible
     by: { has-attr: data-recall-history }
   - intent: hover 历史项让删除按钮可见

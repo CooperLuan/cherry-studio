@@ -56,8 +56,9 @@ steps:
   - intent: 展开目标分组，确保库行渲染可见
     do: click
     by: { within: { class: "group/grp", has-text: "e2e-group" }, data-slot: accordion-trigger }
-  - check: visible
-    by: { within: { has-text: "e2e-group" }, has-text: "E2E_Test_KB" }
+  - intent: E2E_Test_KB 落在 e2e-group 分组内（trigger 与 base 行是 AccordionItem 下两兄弟，scope 到 content 容器的 data-group-name）
+    check: visible
+    by: { within: { has-attr: "data-group-name=e2e-group" }, testid: kb-base-row, has-text: "E2E_Test_KB" }
 
   # ── 重命名库（h1 更新）──
   - do: hover

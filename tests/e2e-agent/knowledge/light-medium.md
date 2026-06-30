@@ -66,6 +66,14 @@
 > - **L2/L3/M2（native picker，owner=false）**：osascript 找不到原生「打开」框（DOM 无 overlay 属正常——原生窗非页面 DOM）→ **测试机侧排查**（原生框是否真弹/窗口标题/归属进程），非 YAML/产品可修。
 >
 > KB-local id 补丁动了 `ragConfig/{panelPrimitives,ChunkingSection,RetrievalSection}.tsx`（可选 `inputId`/`triggerId` 转发到 Input/SelectTrigger，外科级）。
+>
+> ⚠️ **2026-06-30 第三轮（HEAD `a19c0e1f9` 复跑：knowledge 4 PASS / 5 FAIL / 1 BLOCKED；M3/M4 已转 PASS，ws 9/9、fp 8/8 仍绿）**：M1 URL Add scope ✅、M5 选中收起 ✅、M7 move_to→e2e-group ✅，失败均后移一步：
+> - **M5（step13）**：`selectHistory` 后 input 仍 focused（dropdown `keepInputFocus`），再点 input 不触发 onFocus → 面板不重开 → 改点**历史切换按钮**（`aria-label=history_title`，`RecallSearchBar` line 54）。
+> - **M7（step15）**：`group/grp` 只在 trigger，base 行在兄弟 `AccordionContent`；`within:{has-text:e2e-group}` 经 `getByText().first()` 命中组标签（不含 base 行）→ 在 `BaseNavigatorGroupSection` 的 content `<div>` 加 `data-group-name={group.name}`（intrinsic，无 TS 风险），YAML scope 到 `{has-attr:"data-group-name=e2e-group"}`。
+> - **M1（step11，测试机 seed，owner=主控定机制）**：note 源经 `useNotesSettings().notesPath`=preference **`feature.notes.path`** 读**目录**列 .md（`NoteSourceContent`）；golden 该值为空 → 显空态。修=测试机在 per-run 副本把 `feature.notes.path` 设为含 `e2e-seed-note.md` 的目录、**启动前**写入 preference DB。非 YAML/产品可修。
+> - **native picker（L2/L3/M2，测试机 osascript）**：runner 硬编码 `tell process "Electron"`，dev 多 Electron 进程下找错窗口（原生框确实秒弹）→ 改 osascript 定位 frontmost 进程 / 正确 PID。
+>
+> M7 testid 补丁动了 `navigator/BaseNavigatorGroupSection.tsx`（content div 加 `data-group-name`，外科级）。
 
 ---
 
