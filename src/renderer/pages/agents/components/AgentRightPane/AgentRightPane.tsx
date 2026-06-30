@@ -9,7 +9,6 @@ import ArtifactPane, {
   isOfficeDocumentFile,
   resolveArtifactPaneFileSelection
 } from '@renderer/components/chat/panes/ArtifactPane'
-import OpenExternalAppButton from '@renderer/components/chat/panes/OpenExternalAppButton'
 import { Shell, useShellActions, useShellState } from '@renderer/components/chat/panes/Shell'
 import { useWindowFrame } from '@renderer/components/chat/shell/WindowFrameContext'
 import { TracePane } from '@renderer/components/chat/trace/TracePane'
@@ -23,6 +22,7 @@ import { useFileSize } from '@renderer/hooks/useFileSize'
 import { useIsTextFile } from '@renderer/hooks/useIsTextFile'
 import { type Topic, TopicType, type TopicType as TopicTypeEnum } from '@renderer/types/topic'
 import { buildAgentSessionTopicId } from '@renderer/utils/agentSession'
+import { joinPath } from '@renderer/utils/path'
 import { cn } from '@renderer/utils/style'
 import type { CherryMessagePart, CherryUIMessage, ModelSnapshot } from '@shared/data/types/message'
 import {
@@ -83,7 +83,7 @@ function getFilePreviewTitle(filePath: string): string {
 }
 
 function isFramedFilePreview(filePath: string): boolean {
-  return /\.(html?|pdf)$/i.test(filePath)
+  return /\.(html?|pdf)$/i.test(filePath) || isOfficeDocumentFile(filePath)
 }
 
 interface AgentFlowTab {
@@ -119,6 +119,7 @@ interface AgentRightPaneState {
   fileTreeOpen: boolean
   fileTreeExpandedIds: ReadonlySet<string>
   fileTreeSearchKeyword: string
+  workspaceId?: string
   workspacePath?: string
 }
 
@@ -141,6 +142,7 @@ interface AgentRightPaneContextValue {
 
 interface AgentRightPaneProviderProps extends AgentRightPaneMeta {
   children: ReactNode
+  workspaceId?: string
   workspacePath?: string
   messages: CherryUIMessage[]
   partsByMessageId: Record<string, CherryMessagePart[]>
@@ -160,6 +162,7 @@ export function useAgentRightPaneActions(): AgentRightPaneActions {
 
 function AgentRightPaneStateProvider({
   children,
+  workspaceId,
   workspacePath,
   messages,
   partsByMessageId,
@@ -179,7 +182,8 @@ function AgentRightPaneStateProvider({
   const [fileTreeOpen, setFileTreeOpen] = useState(false)
   const [fileTreeExpandedIds, setFileTreeExpandedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [fileTreeSearchKeyword, setFileTreeSearchKeyword] = useState('')
-  const previousWorkspacePathRef = useRef(workspacePath)
+  const workspaceKey = `${workspaceId ?? ''}\0${workspacePath ?? ''}`
+  const previousWorkspaceKeyRef = useRef(workspaceKey)
 
   const activeFlowToolCallId = getFlowToolCallId(activeTab)
   const activeFlowTab = activeFlowToolCallId
@@ -221,14 +225,14 @@ function AgentRightPaneStateProvider({
   )
 
   useEffect(() => {
-    if (previousWorkspacePathRef.current === workspacePath) return
-    previousWorkspacePathRef.current = workspacePath
+    if (previousWorkspaceKeyRef.current === workspaceKey) return
+    previousWorkspaceKeyRef.current = workspaceKey
     setSelectedFile(null)
     setFilePreview(null)
     setFileTreeExpandedIds(new Set())
     setFileTreeSearchKeyword('')
     if (activeTab === FILE_PREVIEW_TAB) openTab('files')
-  }, [activeTab, openTab, workspacePath])
+  }, [activeTab, openTab, workspaceKey])
   const closeFilePreview = useCallback(() => {
     if (activeTab === FILE_PREVIEW_TAB) openTab('files')
     setFilePreview(null)
@@ -253,6 +257,7 @@ function AgentRightPaneStateProvider({
         fileTreeOpen,
         fileTreeExpandedIds,
         fileTreeSearchKeyword,
+        workspaceId,
         workspacePath
       },
       actions: {
@@ -288,6 +293,7 @@ function AgentRightPaneStateProvider({
       sessionName,
       status,
       traceId,
+      workspaceId,
       workspacePath
     ]
   )
@@ -332,6 +338,9 @@ function AgentFilePreviewPanel({ preview }: { preview: AgentFilePreviewTab }) {
   const sniffedIsText = useIsTextFile(preview.workspacePath, preview.filePath, { enabled: shouldSniffFile })
   const isText = shouldSniffFile ? sniffedIsText : 'binary'
   const fileSize = useFileSize(preview.workspacePath, preview.filePath)
+  const openExternal = useCallback(() => {
+    void window.api.file.openPath(joinPath(preview.workspacePath, preview.filePath))
+  }, [preview.filePath, preview.workspacePath])
 
   return (
     <div
@@ -344,13 +353,9 @@ function AgentFilePreviewPanel({ preview }: { preview: AgentFilePreviewTab }) {
         filePath={preview.filePath}
         isText={isText}
         fileSize={fileSize}
-        officeActions={
-          isOfficeDocumentPreview ? (
-            <OpenExternalAppButton workdir={preview.workspacePath} filePath={preview.filePath} />
-          ) : undefined
-        }
         pdfLayoutPending={shellState.pdfLayoutPending}
         pdfLayoutRefreshKey={shellState.pdfLayoutRefreshKey}
+        onOpenExternal={openExternal}
       />
     </div>
   )
