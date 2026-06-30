@@ -280,34 +280,26 @@ const CLAUDE_TOOL_REGISTRY = {
     description: 'Searches your knowledge bases',
     mcpServer: 'cherry-tools'
   },
+  // Lists the bases, or outlines one base's structure when given a baseId. No separate toggle, but it
+  // follows the visible "Knowledge Search" toggle (dependsOn kb_search): disabling search also revokes
+  // browsing, so the user-facing toggle honestly covers all knowledge-base read access.
   CherryKbList: {
     name: 'mcp__cherry-tools__kb_list',
     category: 'context',
     exposure: 'internal',
-    description: 'Lists your knowledge bases',
+    description: 'Lists your knowledge bases, or outlines one base’s structure',
+    dependsOn: ['mcp__cherry-tools__kb_search'],
     mcpServer: 'cherry-tools'
   },
-  // Deep-read tools follow the knowledge-base capability like kb_list (infrastructure the agent
-  // reaches for after a search) — internal, no separate toggle.
+  // Deep-read tool (infrastructure the agent reaches for after a search) — internal, no separate
+  // toggle. It returns whole documents (more than kb_search's chunks), so it follows the visible
+  // "Knowledge Search" toggle (dependsOn kb_search): disabling search also revokes document reads.
   CherryKbRead: {
     name: 'mcp__cherry-tools__kb_read',
     category: 'context',
     exposure: 'internal',
-    description: 'Reads a document from your knowledge bases',
-    mcpServer: 'cherry-tools'
-  },
-  CherryKbGrep: {
-    name: 'mcp__cherry-tools__kb_grep',
-    category: 'context',
-    exposure: 'internal',
-    description: 'Searches for an exact pattern inside a knowledge base document',
-    mcpServer: 'cherry-tools'
-  },
-  CherryKbTree: {
-    name: 'mcp__cherry-tools__kb_tree',
-    category: 'context',
-    exposure: 'internal',
-    description: 'Outlines the structure of a knowledge base',
+    description: 'Reads a knowledge base document, or greps within it',
+    dependsOn: ['mcp__cherry-tools__kb_search'],
     mcpServer: 'cherry-tools'
   },
   // The one mutating KB tool (add/delete/refresh sources) — exposed as its own toggle so the user

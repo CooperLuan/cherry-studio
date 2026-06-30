@@ -4,12 +4,14 @@ import type { Assistant } from '@shared/data/types/assistant'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const readConcept = vi.fn()
+// Grep mode (kb_read with a pattern) routes to grepConcept; read mode routes to readConcept.
+const grepConcept = vi.fn()
 const loggerWarn = vi.hoisted(() => vi.fn())
 
 vi.mock('@main/core/application', () => ({
   application: {
     get: (name: string) => {
-      if (name === 'KnowledgeService') return { readConcept }
+      if (name === 'KnowledgeService') return { readConcept, grepConcept }
       throw new Error(`unexpected service: ${name}`)
     }
   }
@@ -29,7 +31,15 @@ function makeAssistant(overrides: Partial<Assistant> = {}): Assistant {
   return { id: 'assistant-1', knowledgeBaseIds: [], ...overrides } as Assistant
 }
 
-type ReadArgs = { baseId: string; conceptId: string; charStart?: number; charEnd?: number }
+type ReadArgs = {
+  baseId: string
+  conceptId: string
+  charStart?: number
+  charEnd?: number
+  pattern?: string
+  ignoreCase?: boolean
+  maxMatches?: number
+}
 
 function callExecute(args: ReadArgs, ctx: { assistant?: Assistant } = {}): Promise<unknown> {
   const execute = entry.tool.execute as (args: ReadArgs, options: ToolExecutionOptions) => Promise<unknown>
@@ -61,13 +71,16 @@ function conceptContent(overrides: Record<string, unknown> = {}) {
 describe('kb_read', () => {
   beforeEach(() => {
     readConcept.mockReset()
+    grepConcept.mockReset()
     loggerWarn.mockReset()
   })
 
-  it('builds an entry with the agreed namespace + defer policy', () => {
+  it('builds an entry with the agreed namespace + defer policy and is auto-approved (read-only)', () => {
     expect(entry.name).toBe(KB_READ_TOOL_NAME)
     expect(entry.namespace).toBe('kb')
-    expect(entry.defer).toBe('auto')
+    expect(entry.defer).toBe('always')
+    // kb_read only reads — the approval carve-out's auto-approve half: no per-call prompt (cf. kb_manage).
+    expect(entry.tool.needsApproval).toBeFalsy()
   })
 
   it('returns an error and does not read when the base is outside the assistant scope', async () => {
@@ -125,6 +138,21 @@ describe('kb_read', () => {
     expect(result.error).toContain('conceptId')
   })
 
+  it('steers a missing-content NOT_FOUND to retry (re-indexing) instead of blaming the conceptId', async () => {
+    // resolveConcept throws a distinct 'Knowledge concept content' resource when a visible, completed
+    // document momentarily has no content row (reindex TOCTOU). Verifying the id can't fix that.
+    readConcept.mockRejectedValue(DataApiErrorFactory.notFound('Knowledge concept content', 'docs/intro.md'))
+
+    const result = (await callExecute(
+      { baseId: 'kb-1', conceptId: 'docs/intro.md' },
+      { assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }) }
+    )) as { error: string }
+
+    expect(result.error).toContain('docs/intro.md')
+    expect(result.error).toMatch(/re-indexing|retry/i)
+    expect(result.error).not.toContain('Verify the conceptId')
+  })
+
   it('steers a missing-base NOT_FOUND to kb_list instead of blaming the conceptId', async () => {
     // The base check runs before the concept lookup, so a gone base surfaces as a 'KnowledgeBase'
     // NOT_FOUND — it must not be reported as a bad conceptId (it would send the model re-checking ids).
@@ -151,6 +179,54 @@ describe('kb_read', () => {
     expect(result.error).toBe('vector store down')
   })
 
+  describe('grep mode (pattern)', () => {
+    it('greps the document when a pattern is given, forwarding options and mapping itemType → type', async () => {
+      grepConcept.mockResolvedValue({
+        conceptId: 'docs/intro.md',
+        title: 'intro.md',
+        itemType: 'note',
+        totalMatches: 1,
+        matches: [{ line: 2, charStart: 9, charEnd: 14, snippet: 'match' }]
+      })
+
+      const result = await callExecute(
+        { baseId: 'kb-1', conceptId: 'docs/intro.md', pattern: 'match', ignoreCase: false, maxMatches: 10 },
+        { assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }) }
+      )
+
+      expect(grepConcept).toHaveBeenCalledWith('kb-1', 'docs/intro.md', {
+        pattern: 'match',
+        ignoreCase: false,
+        maxMatches: 10
+      })
+      // read mode must NOT run when a pattern is present (pattern routes to grepConcept).
+      expect(readConcept).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        conceptId: 'docs/intro.md',
+        title: 'intro.md',
+        type: 'note',
+        totalMatches: 1,
+        matches: [{ line: 2, charStart: 9, charEnd: 14, snippet: 'match' }]
+      })
+    })
+
+    it('surfaces an invalid-pattern validation error message', async () => {
+      grepConcept.mockRejectedValue(
+        DataApiErrorFactory.validation(
+          { pattern: ['Invalid regular expression'] },
+          'Invalid kb_read regular expression: ('
+        )
+      )
+
+      const result = (await callExecute(
+        { baseId: 'kb-1', conceptId: 'docs/intro.md', pattern: '(' },
+        { assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }) }
+      )) as { error: string }
+
+      expect(result.error).toContain('Invalid kb_read regular expression')
+    })
+  })
+
   describe('toModelOutput', () => {
     const toModelOutput = entry.tool.toModelOutput as (opts: {
       toolCallId: string
@@ -164,6 +240,32 @@ describe('kb_read', () => {
       expect(result).toEqual({ type: 'json', value: output })
     })
 
+    it('passes grep matches through as json (grep mode)', () => {
+      const output = {
+        conceptId: 'docs/intro.md',
+        title: 'intro.md',
+        type: 'note',
+        totalMatches: 1,
+        matches: [{ line: 2, charStart: 9, charEnd: 14, snippet: 'match' }]
+      }
+      const result = toModelOutput({
+        toolCallId: 'tc-1',
+        input: { baseId: 'kb-1', conceptId: 'x', pattern: 'y' },
+        output
+      })
+      expect(result).toEqual({ type: 'json', value: output })
+    })
+
+    it('returns a no-matches hint as text when grep finds nothing (grep mode)', () => {
+      const result = toModelOutput({
+        toolCallId: 'tc-1',
+        input: { baseId: 'kb-1', conceptId: 'x', pattern: 'y' },
+        output: { conceptId: 'docs/intro.md', title: 'intro.md', type: 'note', totalMatches: 0, matches: [] }
+      })
+      expect(result.type).toBe('text')
+      expect(result.value).toMatch(/No matches/)
+    })
+
     it('renders an error as text', () => {
       const result = toModelOutput({
         toolCallId: 'tc-1',
@@ -175,11 +277,33 @@ describe('kb_read', () => {
   })
 
   describe('applies', () => {
-    it('returns true only when the assistant has at least one knowledge base id', () => {
+    it('returns true only when a base exists AND at least one is bound to the assistant', () => {
       const applies = entry.applies!
-      expect(applies({ assistant: undefined, mcpToolIds: new Set() })).toBe(false)
-      expect(applies({ assistant: makeAssistant({ knowledgeBaseIds: [] }), mcpToolIds: new Set() })).toBe(false)
-      expect(applies({ assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }), mcpToolIds: new Set() })).toBe(true)
+      // No base in the system → never applies, even with bound ids.
+      expect(
+        applies({
+          assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }),
+          mcpToolIds: new Set(),
+          hasAnyKnowledgeBase: false
+        })
+      ).toBe(false)
+      // A base exists but none bound to this assistant → does not apply.
+      expect(applies({ assistant: undefined, mcpToolIds: new Set(), hasAnyKnowledgeBase: true })).toBe(false)
+      expect(
+        applies({
+          assistant: makeAssistant({ knowledgeBaseIds: [] }),
+          mcpToolIds: new Set(),
+          hasAnyKnowledgeBase: true
+        })
+      ).toBe(false)
+      // A base exists AND is bound → applies.
+      expect(
+        applies({
+          assistant: makeAssistant({ knowledgeBaseIds: ['kb-1'] }),
+          mcpToolIds: new Set(),
+          hasAnyKnowledgeBase: true
+        })
+      ).toBe(true)
     })
   })
 })

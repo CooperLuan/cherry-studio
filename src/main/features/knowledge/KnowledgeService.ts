@@ -85,7 +85,7 @@ const CONCEPT_GREP_SNIPPET_PAD = 60
  */
 const CONCEPT_GREP_MAX_LINE_CHARS = 2000
 /** Hard ceiling on nodes {@link KnowledgeService.getOrganizationTree} returns, bounding the response for a huge base. */
-const KNOWLEDGE_TREE_MAX_NODES = 1000
+export const KNOWLEDGE_TREE_MAX_NODES = 1000
 
 /** Verbatim slice of a knowledge concept's indexed text, addressed by Concept ID (the material's relative path, OKF §2). */
 export interface KnowledgeConceptContent {
@@ -125,8 +125,8 @@ export interface KnowledgeConceptGrep {
  * One node of a knowledge base's organization tree, emitted in pre-order DFS so
  * the flat list reads top-down like an outline. `depth` (0 at the base root)
  * carries the hierarchy without a recursive shape. `conceptId` is set only for a
- * readable leaf (a completed file/url/note) so it can be passed to kb_read /
- * kb_grep; directories and not-yet-indexed leaves have none.
+ * readable leaf (a completed file/url/note) so it can be passed to kb_read
+ * (read or grep mode); directories and not-yet-indexed leaves have none.
  */
 export interface KnowledgeTreeNode {
   depth: number
@@ -182,18 +182,25 @@ function deriveConceptId(item: KnowledgeItem): string | undefined {
   }
   try {
     return toMaterialRelativePath(item)
-  } catch {
+  } catch (error) {
+    // A completed url/note with no snapshot relativePath is an invariant violation. Swallow it (one
+    // unfollowable hit must not sink the whole search) but leave a diagnostic trail rather than a silent drop.
+    logger.warn('deriveConceptId: completed item has no material relativePath', {
+      itemId: item.id,
+      type: item.type,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return undefined
   }
 }
 
-/** Compile a kb_grep pattern (always global; case-insensitive unless told otherwise), turning a bad pattern into a validation error. */
+/** Compile a kb_read grep-mode pattern (always global; case-insensitive unless told otherwise), turning a bad pattern into a validation error. */
 function compileGrepRegex(pattern: string, ignoreCase: boolean): RegExp {
   try {
     return new RegExp(pattern, ignoreCase ? 'gi' : 'g')
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw DataApiErrorFactory.validation({ pattern: [message] }, `Invalid kb_grep regular expression: ${message}`)
+    throw DataApiErrorFactory.validation({ pattern: [message] }, `Invalid kb_read regular expression: ${message}`)
   }
 }
 
@@ -464,6 +471,12 @@ export class KnowledgeService extends BaseService {
     return items
   }
 
+  /** Whether the user has any knowledge base at all — a cheap count (not a full list) for tool-availability gating. */
+  async hasAnyBase(): Promise<boolean> {
+    const { total } = await knowledgeBaseService.list({ page: 1, limit: 1 })
+    return total > 0
+  }
+
   async listRootItems(baseId: string): Promise<KnowledgeItem[]> {
     return await knowledgeItemService.getRootItemsByBaseId(baseId)
   }
@@ -726,7 +739,13 @@ export class KnowledgeService extends BaseService {
 
     const text = await this.runStoreOperation(store, baseId, operation, () => store.readMaterialContent(ref.materialId))
     if (text == null) {
-      throw DataApiErrorFactory.notFound('Knowledge concept', conceptId)
+      // The material resolved and the item is visible + completed, yet it has no content row — an
+      // invariant violation or a reindex TOCTOU race, NOT a bad conceptId. Use a distinct resource so the
+      // tool layer (conceptLookupError) can steer "retry shortly" instead of "verify the conceptId", which
+      // cannot fix a missing content row. The resource string mirrors KNOWLEDGE_CONCEPT_CONTENT_NOT_FOUND_RESOURCE
+      // in knowledgeLookup.ts.
+      logger.warn('resolveConcept: visible completed item has no content row', { baseId, conceptId, operation })
+      throw DataApiErrorFactory.notFound('Knowledge concept content', conceptId)
     }
 
     return { item, text }
@@ -735,7 +754,7 @@ export class KnowledgeService extends BaseService {
   /**
    * Build a knowledge base's organization tree from the `knowledge_item.groupId`
    * hierarchy — directories are folders, file/url/note are leaves carrying a
-   * readable `conceptId` (when completed) for kb_read / kb_grep. This is the
+   * readable `conceptId` (when completed) for kb_read. This is the
    * logical org layer the OKF `index.md` surfaces, deliberately decoupled from
    * the flat physical `raw/` layout: no material scan, no path joins. Emitted as
    * a pre-order DFS node list (each node's `depth` carries the hierarchy),
@@ -828,7 +847,7 @@ export class KnowledgeService extends BaseService {
         },
         itemId: match.materialId,
         chunkId: match.unitId,
-        // Concept ID + title so a hit can be followed up with kb_read / kb_grep.
+        // Concept ID + title so a hit can be followed up with kb_read.
         conceptId: deriveConceptId(item),
         title: getKnowledgeItemDisplayTitle(item)
       })
