@@ -13,6 +13,14 @@ live: []
 prereqs: [completed-base, no-existing-group]
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB ──
+  # 不补则 step0 的 `aria: Add` 命中主聊天页「添加」按钮（菜单=上传附件/生成图片/...）→ 等「新建分组」超时；
+  # 且末尾 rename 后断 DetailHeader 标题需该库已打开。
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   # ── 建组（空名门控 + 有效名）──
   - intent: 建组：navigator header Add
     do: click

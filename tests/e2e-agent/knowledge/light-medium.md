@@ -52,6 +52,12 @@
 
 > **决策（已定 2026-06-26）**：2A 已补（✅ light live 验证通过）；**U1 作废**（upstream MenuItem 已有 `role=menuitem`）；**U2 + M6 暂缓**。
 
+> ⚠️ **2026-06-30 formal-runner 修订（YAML 已改，`.compiled` 须重编 + 重 live 验证）**：正式 runner 直接重放 `.compiled` 第一步、**不替 case 满足 prereq/导航**，暴露原 06-26 的 live 验证是「链式校准（人先进知识库 + 开库）」下的通过，单独重放时大面积 step0 失败（knowledge 0/10）。修复（本 PR）：
+> - **自导航前置**：L2/L4/M2/M3/M4/M5/M7 每个 case 起手补 `goto knowledge` + 点 `[data-testid=kb-base-row]` 开 `E2E_Test_KB`（对齐 L1/websearch/fp 惯例；点行=`onSelectBase` 幂等）。**L3 不补**（`after: kb-l2-add-file` 链尾，继承 L2 同会话开库态）。
+> - **M1 解耦**：去掉 `after: kb-l4-recall-panel`（M1 不复用 L4 数据，却继承其召回抽屉脏态）→ 改独立自导航。
+> - **L1 结果锚点**：弃 `bg-secondary`（选中态在 navigator 行**内层** div，runner 取 `kb-base-row` 外层取不到）→ 改断 **DetailHeader 标题 `h1.text-2xl` = 探针库名**（库已打开等价证明）。
+> - **L2 计数收窄**：`kb-item-row` 裸 `min:1` 在 completed-base 上 vacuous（E2E_Test_KB 已有 1 物料）→ 按 `has-text:"sample"` 收窄到新增行。
+
 ---
 
 ## 3. Light 层（必须每次绿）

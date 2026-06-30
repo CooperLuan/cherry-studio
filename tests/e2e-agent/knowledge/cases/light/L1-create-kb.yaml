@@ -1,8 +1,8 @@
 # Tracer case — proves the schema for: sidebar nav, dialog, offline validation,
 # model pick (live), and a locale-free terminal-status assertion.
 # 在 completed-base profile 上跑（golden 已有 E2E_Test_KB）：不再断言空态，而是新建一个独立的
-# "E2E Light KB" 探针库（名异于 E2E_Test_KB，不撞名）；结果断言 scope 到探针库行（kb-base-status
-# 在 DetailHeader 单数、随当前打开库走，故有 E2E_Test_KB 在旁也不歧义）。依赖 runner per-case 复位。
+# "E2E Light KB" 探针库（名异于 E2E_Test_KB，不撞名）；结果断言走 DetailHeader（标题 h1 + kb-base-status，
+# 二者皆 DetailHeader 单数、随当前打开库走，故有 E2E_Test_KB 在旁也不歧义）。依赖 runner per-case 复位。
 # Spec: ../../light-medium.md §3 L1
 id: kb-l1-create-kb
 title: 创建知识库（含离线校验 + 索引完成）
@@ -44,9 +44,11 @@ steps:
   - do: click
     by: { submit: dialog }
 
-  # ── 结果：库行选中 + 状态终态（locale 无关 data-*，有界等待）──
+  # ── 结果：新建库已打开（DetailHeader 标题=探针库名）+ 状态终态（locale 无关 data-*，有界等待）──
+  # completed-base 上新建库不必然在 navigator 行带 bg-secondary（选中态在内层 div，runner 实测取不到）→
+  # 改断 DetailHeader 标题（h1.text-2xl）已是探针库名，等价于「该库已打开/选中」，绕开内外层 class 歧义。
   - check: visible
-    by: { within: { testid: kb-base-row, has-text: "E2E Light KB" }, class: bg-secondary }   # 新建探针库行被选中（scope 到 E2E Light KB，排除 E2E_Test_KB 行）
+    by: { class: "text-2xl", has-text: "E2E Light KB" }
   - check: attr
     by: { testid: kb-base-status }
     attr: data-status

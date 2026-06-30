@@ -8,6 +8,12 @@ live: []                       # 刻意停在 IPC 搜索之前，纯本地状态
 prereqs: [completed-base]
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB（completed-base 详情页）──
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   - intent: 点 DetailHeader 召回测试按钮 → PageSidePanel 抽屉（非 tab）
     do: click
     by: { i18n: knowledge.tabs.recall_test }

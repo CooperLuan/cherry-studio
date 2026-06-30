@@ -8,9 +8,15 @@ domain: knowledge
 locale: zh-CN
 live: [network]                # URL 索引联网；仅 add-time 断言，不等抓取
 prereqs: [completed-base, notes-seeded]
-after: kb-l4-recall-panel
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB ──
+  # 原 `after: kb-l4-recall-panel` 已去除：M1 不复用 L4 任何数据，却会继承 L4 的「召回抽屉开着」脏态 → 独立自导航更稳。
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   # ── URL 源（add-time only）──
   - do: click
     by: { i18n: knowledge.data_source.toolbar.add }

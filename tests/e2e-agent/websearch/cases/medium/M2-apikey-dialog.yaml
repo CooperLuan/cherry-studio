@@ -23,7 +23,7 @@ steps:
   - do: click
     by: { aria-i18n: settings.provider.api.key.list.open }
   - check: visible
-    by: { i18n: settings.provider.api.key.list.title }
+    by: { data-slot: dialog-content }                         # 标题现带 provider 前缀（'Tavily API 密钥管理'，见 WebSearchProviderSetting.tsx）→ 精确 i18n 文本匹配失效；改断 dialog 已开（radix 仅 open 时挂载 [data-slot=dialog-content]，locale 无关）
 
   # ── 新增一行 → 出现编辑 input ──
   - do: click

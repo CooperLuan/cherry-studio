@@ -31,6 +31,6 @@ steps:
   # ── 复位 keywords → exa-mcp（run-order 必须 + 幂等）──
   - do: select
     by: { id: web-search-default-keywords-provider }
-    option: exa-mcp
+    option: ExaMCP                                            # radix SelectItem 不把 value 暴露成可查 DOM 属性 → runner 按可见文本匹配；显示名=provider.name='ExaMCP'（裸 'exa-mcp' 因连字符匹配不上）。badge 仍按内部 id data-provider-id=exa-mcp
   - check: visible
     by: { testid: ws-default-badge, attr: { data-provider-id: exa-mcp } }

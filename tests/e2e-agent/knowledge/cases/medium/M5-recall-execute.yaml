@@ -10,6 +10,12 @@ prereqs: [completed-base]
 fixtures: [recall-query]       # 命名字符串：sample.md 的已知字面子串（保 ≥1 命中）
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB ──
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   - intent: 开召回测试抽屉（DetailHeader FlaskConical）
     do: click
     by: { i18n: knowledge.tabs.recall_test }

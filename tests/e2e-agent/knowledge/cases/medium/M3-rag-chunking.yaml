@@ -8,6 +8,12 @@ live: []
 prereqs: [completed-base, two-embedding-models]
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB ──
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   - intent: 打开 RAG 配置抽屉（DetailHeader SlidersHorizontal）
     do: click
     by: { aria-i18n: knowledge.tabs.rag_config }

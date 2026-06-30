@@ -2,6 +2,9 @@
 
 > 域 spec「文件处理 / 文档解析」，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**（preference 走 SQLite）。
 > **状态**：已在 `41dc908e0` live 校准（测试机 agent-browser，golden=zh-CN）。**FP-L1~L4 + M1/M3/M4 PASS**；**FP-M2 已升级为真 live CRUD**（弹窗快照 bug 经上游 [#16494](https://github.com/CherryHQ/cherry-studio/pull/16494) 修复并 cherry-pick + live 验证：add→行 +1 / delete→归零，均即时、无需 close→reopen；用 mistral 空列表隔离）→ **待测试机重 compile 产 `.compiled`**。§4 校准点全部有答。
+> ⚠️ **2026-06-30 formal-runner 修订（upstream merge 后锚点漂移，`.compiled` 须重编）**：
+> - **FP-M2** apikey 弹窗标题断言 `{i18n: ...key.list.title}` → **`{data-slot: dialog-content}`**：标题现带 processor 前缀（`Mistral API 密钥管理`，见 `ProcessorPanel.tsx:129`），精确 i18n 文本匹配失效；改断 dialog 已开（radix 仅 open 时挂载，locale 无关）。
+> - 这次 runner 批跑中 FP-M3/M4 的 step2 失败为 **FP-M2 失败后未关 dialog overlay 的级联**（非各自 bug）→ 修好 M2 + runner case 间 `closeOverlays` 后预期消解。
 > **本质边界**：真正的「转换」（文档→Markdown / 图片→文本）在主进程执行，**renderer 不暴露转换过程**（结果被 LLM/KB 消费）。因此本域 light/medium = **设置/配置面**（离线确定性），与 `websearch` 完全同构；实际转换 = live、只能跨 `knowledge` 域间接观测 → 归 **full**（见 §6，本批不做）。
 
 ## 0. 架构与锚点

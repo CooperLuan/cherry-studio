@@ -2,6 +2,10 @@
 
 > 域 spec，对齐 [`../README.md`](../README.md) 框架契约。**纯 v2**（无 v1/v2 共存，preference 走 SQLite）。
 > **状态**：已 live 校准并**全 9 case PASS**（`08c005190` 复跑：L1-L4 + M1-M5 全绿）。M5 首版（disabled gate）首跑 FAIL→**已转向 enable/disable toggle 并复跑确认 PASS**（golden 活动模型从 `Qwen|CherryAI` 漂到 `DeepSeek V4 Flash|CherryInExpress`、支持 web search，disabled 前提作废，见 WS-M5）。锚点全部对实测对齐。`.compiled/` 已在测试机产出 9 个（待 vet 后入 repo）。
+> ⚠️ **2026-06-30 formal-runner 修订（upstream merge 后锚点漂移，`.compiled` 须重编）**：
+> - **WS-L4** `select option: exa-mcp` → **`ExaMCP`**：radix SelectItem 不把 `value` 暴露成可查 DOM 属性，runner 按可见文本匹配；显示名 `provider.name='ExaMCP'`，裸 `exa-mcp`（连字符）匹配不上。badge 仍按内部 id `data-provider-id=exa-mcp`（id 未变）。
+> - **WS-M2** apikey 弹窗标题断言 `{i18n: ...key.list.title}` → **`{data-slot: dialog-content}`**：标题现带 provider 前缀（`Tavily API 密钥管理`，见 `WebSearchProviderSetting.tsx:270`），精确 i18n 文本匹配失效；改断 dialog 已开（radix 仅 open 时挂载，locale 无关）。
+> - 这次 runner 批跑中 WS-M1~M5 的 step2/3 失败为 **WS-L4 失败后未关 overlay 的级联**（非各自 bug）→ 修好 L4 + runner case 间 `closeOverlays` 后预期消解。
 
 ## 0. 架构与锚点
 

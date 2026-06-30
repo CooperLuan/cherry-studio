@@ -11,6 +11,12 @@ prereqs: [completed-base]
 fixtures: [dupe-a, dupe-b]
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB ──
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   - intent: 加入 dupe/a/report.md
     do: click
     by: { i18n: knowledge.data_source.toolbar.add }

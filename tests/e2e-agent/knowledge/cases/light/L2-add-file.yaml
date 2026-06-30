@@ -11,6 +11,13 @@ prereqs: [golden-profile, completed-base]
 fixtures: [sample-md]
 
 steps:
+  # ── 自导航前置：goto knowledge + 打开 golden 库 E2E_Test_KB（completed-base 详情页，链头）──
+  # 不补则 formal runner 从 step0 重放仍停在主聊天页，找不到 DataSourcePanel toolbar（点 kb-base-row=onSelectBase，幂等）。
+  - do: goto
+    nav: knowledge
+  - do: click
+    by: { testid: kb-base-row, has-text: "E2E_Test_KB" }
+
   - intent: 打开数据源菜单（toolbar Add）
     do: click
     by: { i18n: knowledge.data_source.toolbar.add }            # DataSourcePanelHeader → 源类型菜单
@@ -26,7 +33,8 @@ steps:
     osascript: pick-file
     path: "${fixtures.sample-md}"
 
-  # ── 纯 DOM gate：行出现（picker 交互非 gating，只看结果）──
+  # ── 纯 DOM gate：sample.md 行出现（picker 交互非 gating，只看结果）──
+  # E2E_Test_KB 已有 1 条 golden 物料 → 裸 `min:1` 会 vacuous 通过（不证明真加了）；按文件名收窄到新增行。
   - check: count
-    by: { testid: kb-item-row }
+    by: { testid: kb-item-row, has-text: "sample" }
     min: 1
