@@ -141,7 +141,7 @@ vi.mock('@main/utils/rtk', () => ({
   rtkRewrite: vi.fn()
 }))
 
-vi.mock('@main/utils/shell-env', () => ({
+vi.mock('@main/utils/shellEnv', () => ({
   default: mocks.getLoginShellEnvironment
 }))
 
