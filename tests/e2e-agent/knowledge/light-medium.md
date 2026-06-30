@@ -68,16 +68,15 @@
 - **断言**：
   | 断言 | 锚点 | 确定性 |
   |---|---|---|
-  | 空态显示 | text `knowledge.empty` | yes |
   | 名称输入存在 | `input#knowledge-create-name`（CreateKnowledgeBaseDialog L189） | yes |
   | 空名报错 | `FieldError` text `knowledge.name_required`（L196，**网络前短路**，submit handler L143-145 早返回） | **yes（离线）** |
   | 无模型报错 | `FieldError` text `knowledge.embedding_model_required`（L237） | **yes（离线）** |
   | 模型选择器 | KnowledgeModelSelect 触发按钮；**aria-label/文本随 locale**（zh-CN「嵌入模型」）→ 用 zh-CN 文本或结构定位，**勿用英文 'Embedding Model'** | yes |
   | 提交按钮文案 | `button[type=submit]` text `knowledge.add.submit`（zh-CN「创建」） | yes |
-  | 建成后库行选中 | `KnowledgeBaseRow` `class*=bg-secondary`（KnowledgeBaseRow.tsx L72） | yes |
+  | 建成后库行选中 | `KnowledgeBaseRow` `class*=bg-secondary`，scope 到探针库行 `[data-testid=kb-base-row]`+has-text `E2E Light KB`（与 golden 的 `E2E_Test_KB` 行区分） | yes |
   | 库状态 Badge | **[T4✅]** `[data-testid=kb-base-status][data-status=completed]`（locale 无关） | partial（server 态） |
 - **live 依赖**：成功建库走 embedding-key（`fetchDimensions` 在校验通过后 L150 才调）。**校验子断言全离线确定性**。
-- **fixtures**：golden profile（含 1 个可用 embedding provider + key，测试机用 `cherryInExpress::qwen/qwen3-embedding-0.6b`）；测试库内无已存在 KB。
+- **fixtures**：golden profile（含 1 个可用 embedding provider + key，测试机用 `cherryInExpress::qwen/qwen3-embedding-0.6b`）；**prereq=completed-base**（golden 已有 `E2E_Test_KB`）→ **不再断言空态**，新建独立探针库 `E2E Light KB`（名异于 `E2E_Test_KB` 不撞名），结果断言 scope 到探针库行；幂等依赖 runner per-case profile 复位。
 - **live 复核（PASS）**：空提交**同时**显示 `name_required` + `embedding_model_required`（非逐个出现）；golden profile 跑 **zh-CN**。
 
 ### L2 — 加单个文件源（native picker，决策 B）
@@ -196,7 +195,8 @@
 - **移库入组**：库行（`[data-testid=kb-base-row]` + 库名 has-text）hover → `aria-label=common.more` 菜单（须 within 库行内，库行/组行同名）→ `knowledge.context.move_to` 段 → 选目标组 → 展开目标组 accordion → 库行 re-render 到目标 section
 - **重命名库**：库行菜单 → `knowledge.context.rename` → `KnowledgeBaseNameDialog`（`input#knowledge-entity-name`）→ `DetailHeader` h1（`class*=text-2xl`）更新
 - **navigator 搜索**：搜索框（placeholder `knowledge.search`）→ 输入不匹配 → 空态 `knowledge.empty`（preset `no-knowledge`）→ clear 按钮（`aria-label=common.clear`，仅非空时显）→ 恢复
-- **确定性**：全 yes（本地 DB/state）。库行已有 `[data-testid=kb-base-row]`（chore(knowledge-navigator) 起）→ 不再靠 `group/kb` class；组行仍用 `class*=group/grp`，h1 用 `class*=text-2xl`。`.compiled` 已 live 重 compile 收敛到 testid（resolved selector 用 `[data-testid="kb-base-row"]`）。
+- **目标库**：golden 的 canonical `E2E_Test_KB`（completed-base）；M7 建组/移库/重命名（→ `E2E_Test_KB Renamed`）**会改动该库**，不做自复位（移回/删组在 full）→ 幂等与不污染依赖 runner per-case profile 复位。
+- **确定性**：全 yes（本地 DB/state）。库行已有 `[data-testid=kb-base-row]`（chore(knowledge-navigator) 起）→ 不再靠 `group/kb` class；组行仍用 `class*=group/grp`，h1 用 `class*=text-2xl`。⚠️ 库名锚点已从 `E2E Light KB` retarget 到 `E2E_Test_KB` → **`.compiled` 须测试机重 compile**（testid 收敛保留，仅库名变）。
 - **菜单定位**：MenuItem 已带 `role=menuitem`（upstream/main，live 复核）→ 按角色或 zh-CN 文本定位。
 - **排除到 full**：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize（需合成鼠标事件）。
 

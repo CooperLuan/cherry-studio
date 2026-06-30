@@ -2,6 +2,8 @@
 # 排除到 full：删库/删组级联 ConfirmDialog、移回 Ungrouped、drag-resize
 # 锚点说明：库行用 `[data-testid=kb-base-row]` + 库名 has-text 定位（testid 自 chore(knowledge-navigator) 起就位）；
 #           组仍用 Tailwind class `group/grp` + 组名。`common.more` 必须 within 库行内（库行/组行同名）。
+# 目标库 = golden 的 canonical `E2E_Test_KB`（completed-base）。M7 会建组/移库/重命名 → **改动该库**，
+#           不做自复位（移回/删组在 full）；幂等与不污染依赖 runner per-case profile 复位（每 case 一份全新 golden）。
 id: kb-m7-navigator-mgmt
 title: navigator 分组/库管理
 tier: medium
@@ -35,9 +37,9 @@ steps:
   # ── 移库入组 ──
   - intent: hover 库行显示 more
     do: hover
-    by: { testid: "kb-base-row", has-text: "E2E Light KB" }
+    by: { testid: "kb-base-row", has-text: "E2E_Test_KB" }
   - do: click
-    by: { within: { testid: "kb-base-row", has-text: "E2E Light KB" }, aria-i18n: common.more }
+    by: { within: { testid: "kb-base-row", has-text: "E2E_Test_KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.move_to }
   - do: click
@@ -46,22 +48,22 @@ steps:
     do: click
     by: { within: { class: "group/grp", has-text: "e2e-group" }, data-slot: accordion-trigger }
   - check: visible
-    by: { within: { has-text: "e2e-group" }, has-text: "E2E Light KB" }
+    by: { within: { has-text: "e2e-group" }, has-text: "E2E_Test_KB" }
 
   # ── 重命名库（h1 更新）──
   - do: hover
-    by: { testid: "kb-base-row", has-text: "E2E Light KB" }
+    by: { testid: "kb-base-row", has-text: "E2E_Test_KB" }
   - do: click
-    by: { within: { testid: "kb-base-row", has-text: "E2E Light KB" }, aria-i18n: common.more }
+    by: { within: { testid: "kb-base-row", has-text: "E2E_Test_KB" }, aria-i18n: common.more }
   - do: click
     by: { role: menuitem, i18n: knowledge.context.rename }
   - do: type
     by: { id: knowledge-entity-name }
-    text: "E2E Light KB Renamed"
+    text: "E2E_Test_KB Renamed"
   - do: click
     by: { submit: dialog }
   - check: visible
-    by: { class: "text-2xl", has-text: "E2E Light KB Renamed" }
+    by: { class: "text-2xl", has-text: "E2E_Test_KB Renamed" }
 
   # ── navigator 搜索 + 空态 + clear 恢复 ──
   - do: type
@@ -72,4 +74,4 @@ steps:
   - do: click
     by: { aria-i18n: common.clear }
   - check: visible
-    by: { testid: "kb-base-row", has-text: "E2E Light KB Renamed" }
+    by: { testid: "kb-base-row", has-text: "E2E_Test_KB Renamed" }
