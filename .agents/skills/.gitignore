@@ -10,8 +10,6 @@
 !create-skill/**
 !demand-first-review/
 !demand-first-review/**
-!e2e-run/
-!e2e-run/**
 !gh-create-issue/
 !gh-create-issue/**
 !gh-create-pr/

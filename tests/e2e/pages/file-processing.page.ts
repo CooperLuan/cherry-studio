@@ -12,7 +12,7 @@ export type FileFeature = 'image_to_text' | 'document_to_markdown'
  * `data-testid` (fp-menu-default-badge / fp-panel-default-badge / fp-apikey-row) first,
  * then role + accessible name, then placeholder / aria-label via `t()` (zh-CN golden).
  * The two `paddleocr` / `mistral` menu entries (one per feature section) are disambiguated
- * by the feature-scoped `id`. See `tests/e2e-agent/fileprocessing/light-medium.md`.
+ * by the feature-scoped `id`.
  */
 export class FileProcessingPage extends BasePage {
   constructor(page: Page) {

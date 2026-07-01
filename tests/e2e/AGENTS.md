@@ -9,9 +9,8 @@ SPEC ──▶ CODE ──▶ VERIFY ──▶ TEST ──▶ GREEN
 
 ## 1. Spec — decide what to assert
 
-Write the acceptance criteria in natural language first (page → action → expected). For agent-domain
-suites (knowledge / websearch / fileprocessing) the per-case spec lives under
-`tests/e2e-agent/<domain>/*.md`. Keep it about behavior, not selectors.
+Write the acceptance criteria in natural language first (page → action → expected). Keep it about
+behavior, not selectors.
 
 ## 2. Code — implement the feature
 
