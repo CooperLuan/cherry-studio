@@ -14,6 +14,21 @@ export const KnowledgeSearchSchema = z.object({
   document_count: z.coerce.number().int().min(1).max(20).default(5)
 })
 
+export const KnowledgeDirectoryPathSchema = z.object({
+  path: z.string().min(1, 'Directory path is required'),
+  mode: z.enum(['enqueue', 'sync']).default('enqueue').optional(),
+  refresh_if_exists: z.boolean().default(false).optional()
+})
+
+export const KnowledgeDirectoryRefreshSchema = z.object({
+  mode: z.enum(['full', 'incremental']).default('full').optional()
+})
+
+export const KnowledgeDirectoryFileRefreshSchema = z.object({
+  path: z.string().min(1, 'File path is required'),
+  fallback: z.enum(['error', 'full-directory']).default('error').optional()
+})
+
 /**
  * Zod schema for pagination query parameters
  */
@@ -27,4 +42,13 @@ export const PaginationQuerySchema = z.object({
  */
 export const KnowledgeBaseIdParamSchema = z.object({
   id: KnowledgeBaseIdSchema
+})
+
+export const KnowledgeDirectoryItemParamSchema = z.object({
+  id: KnowledgeBaseIdSchema,
+  itemId: z.string().min(1, 'Knowledge item ID is required')
+})
+
+export const KnowledgeJobParamSchema = z.object({
+  jobId: z.string().min(1, 'Knowledge job ID is required')
 })

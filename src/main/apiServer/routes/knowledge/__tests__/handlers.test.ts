@@ -17,6 +17,31 @@ vi.mock('@main/services/KnowledgeService', () => ({
   }
 }))
 
+vi.mock('@main/services/KnowledgeMaintenanceService', () => {
+  class KnowledgeMaintenanceError extends Error {
+    constructor(
+      public readonly statusCode: number,
+      public readonly code: string,
+      message: string,
+      public readonly type = 'invalid_request_error'
+    ) {
+      super(message)
+      this.name = 'KnowledgeMaintenanceError'
+    }
+  }
+
+  return {
+    KnowledgeMaintenanceError,
+    default: {
+      addDirectory: vi.fn(),
+      refreshDirectory: vi.fn(),
+      refreshDirectoryFile: vi.fn(),
+      getJob: vi.fn(),
+      waitForJob: vi.fn()
+    }
+  }
+})
+
 vi.mock('@logger', () => ({
   loggerService: {
     withContext: vi.fn(() => ({
@@ -29,7 +54,15 @@ vi.mock('@logger', () => ({
 }))
 
 // Import handlers AFTER mocks
-import { getKnowledgeBase, listKnowledgeBases, searchKnowledge } from '../handlers'
+import {
+  addKnowledgeDirectory,
+  getKnowledgeBase,
+  getKnowledgeJob,
+  listKnowledgeBases,
+  refreshKnowledgeDirectory,
+  refreshKnowledgeDirectoryFile,
+  searchKnowledge
+} from '../handlers'
 
 // Helper to create mock KnowledgeBase
 function createMockKnowledgeBase(overrides: Partial<KnowledgeBase> = {}): KnowledgeBase {
@@ -201,6 +234,159 @@ describe('Knowledge Handlers', () => {
       await searchKnowledge(req as ValidationRequest, res as Response)
 
       expect(statusMock).toHaveBeenCalledWith(503)
+    })
+  })
+
+  describe('addKnowledgeDirectory', () => {
+    it('should enqueue a directory indexing job', async () => {
+      const KnowledgeMaintenanceService = (await import('@main/services/KnowledgeMaintenanceService')).default
+      const job = {
+        id: 'kbjob-test',
+        operation: 'add_directory',
+        knowledge_base_id: 'kb-1',
+        item_id: 'item-1',
+        directory_item_id: 'item-1',
+        status: 'queued',
+        progress: 0,
+        created_at: 1,
+        updated_at: 1,
+        error: null
+      }
+      ;(KnowledgeMaintenanceService.addDirectory as ReturnType<typeof vi.fn>).mockResolvedValue(job)
+
+      req.validatedParams = { id: 'kb-1' }
+      req.validatedBody = { path: '/docs', mode: 'enqueue', refresh_if_exists: false }
+
+      await addKnowledgeDirectory(req as ValidationRequest, res as Response)
+
+      expect(KnowledgeMaintenanceService.addDirectory).toHaveBeenCalledWith('kb-1', '/docs', {
+        mode: 'enqueue',
+        refresh_if_exists: false
+      })
+      expect(statusMock).toHaveBeenCalledWith(202)
+      expect(jsonMock).toHaveBeenCalledWith(job)
+    })
+
+    it('should return service errors from directory indexing', async () => {
+      const maintenanceModule = await import('@main/services/KnowledgeMaintenanceService')
+      const KnowledgeMaintenanceService = maintenanceModule.default
+      ;(KnowledgeMaintenanceService.addDirectory as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new maintenanceModule.KnowledgeMaintenanceError(409, 'DIRECTORY_ALREADY_EXISTS', 'Directory already exists')
+      )
+
+      req.validatedParams = { id: 'kb-1' }
+      req.validatedBody = { path: '/docs' }
+
+      await addKnowledgeDirectory(req as ValidationRequest, res as Response)
+
+      expect(statusMock).toHaveBeenCalledWith(409)
+      expect(jsonMock).toHaveBeenCalledWith({
+        error: {
+          message: 'Directory already exists',
+          type: 'invalid_request_error',
+          code: 'DIRECTORY_ALREADY_EXISTS'
+        }
+      })
+    })
+  })
+
+  describe('refreshKnowledgeDirectory', () => {
+    it('should enqueue a directory refresh job', async () => {
+      const KnowledgeMaintenanceService = (await import('@main/services/KnowledgeMaintenanceService')).default
+      const job = {
+        id: 'kbjob-refresh',
+        operation: 'refresh_directory',
+        knowledge_base_id: 'kb-1',
+        item_id: 'item-1',
+        directory_item_id: 'item-1',
+        status: 'queued',
+        progress: 0,
+        created_at: 1,
+        updated_at: 1,
+        error: null
+      }
+      ;(KnowledgeMaintenanceService.refreshDirectory as ReturnType<typeof vi.fn>).mockResolvedValue(job)
+
+      req.validatedParams = { id: 'kb-1', itemId: 'item-1' }
+      req.validatedBody = { mode: 'full' }
+
+      await refreshKnowledgeDirectory(req as ValidationRequest, res as Response)
+
+      expect(KnowledgeMaintenanceService.refreshDirectory).toHaveBeenCalledWith('kb-1', 'item-1', { mode: 'full' })
+      expect(statusMock).toHaveBeenCalledWith(202)
+      expect(jsonMock).toHaveBeenCalledWith(job)
+    })
+  })
+
+  describe('refreshKnowledgeDirectoryFile', () => {
+    it('should enqueue a single-file refresh job', async () => {
+      const KnowledgeMaintenanceService = (await import('@main/services/KnowledgeMaintenanceService')).default
+      const job = {
+        id: 'kbjob-file',
+        operation: 'refresh_directory_file',
+        knowledge_base_id: 'kb-1',
+        item_id: 'item-1',
+        directory_item_id: 'item-1',
+        file_path: '/docs/a.md',
+        status: 'queued',
+        progress: 0,
+        created_at: 1,
+        updated_at: 1,
+        error: null
+      }
+      ;(KnowledgeMaintenanceService.refreshDirectoryFile as ReturnType<typeof vi.fn>).mockResolvedValue(job)
+
+      req.validatedParams = { id: 'kb-1', itemId: 'item-1' }
+      req.validatedBody = { path: '/docs/a.md', fallback: 'error' }
+
+      await refreshKnowledgeDirectoryFile(req as ValidationRequest, res as Response)
+
+      expect(KnowledgeMaintenanceService.refreshDirectoryFile).toHaveBeenCalledWith('kb-1', 'item-1', '/docs/a.md', {
+        fallback: 'error'
+      })
+      expect(statusMock).toHaveBeenCalledWith(202)
+      expect(jsonMock).toHaveBeenCalledWith(job)
+    })
+  })
+
+  describe('getKnowledgeJob', () => {
+    it('should return a knowledge job', async () => {
+      const KnowledgeMaintenanceService = (await import('@main/services/KnowledgeMaintenanceService')).default
+      const job = {
+        id: 'kbjob-test',
+        operation: 'add_directory',
+        knowledge_base_id: 'kb-1',
+        status: 'completed',
+        progress: 100,
+        created_at: 1,
+        updated_at: 2,
+        error: null
+      }
+      ;(KnowledgeMaintenanceService.getJob as ReturnType<typeof vi.fn>).mockReturnValue(job)
+
+      req.validatedParams = { jobId: 'kbjob-test' }
+
+      await getKnowledgeJob(req as ValidationRequest, res as Response)
+
+      expect(jsonMock).toHaveBeenCalledWith(job)
+    })
+
+    it('should return 404 when job is not found', async () => {
+      const KnowledgeMaintenanceService = (await import('@main/services/KnowledgeMaintenanceService')).default
+      ;(KnowledgeMaintenanceService.getJob as ReturnType<typeof vi.fn>).mockReturnValue(null)
+
+      req.validatedParams = { jobId: 'missing-job' }
+
+      await getKnowledgeJob(req as ValidationRequest, res as Response)
+
+      expect(statusMock).toHaveBeenCalledWith(404)
+      expect(jsonMock).toHaveBeenCalledWith({
+        error: {
+          message: 'Knowledge job not found: missing-job',
+          type: 'invalid_request_error',
+          code: 'KNOWLEDGE_JOB_NOT_FOUND'
+        }
+      })
     })
   })
 })

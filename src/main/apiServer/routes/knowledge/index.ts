@@ -1,7 +1,23 @@
 import express from 'express'
 
-import { getKnowledgeBase, listKnowledgeBases, searchKnowledge } from './handlers'
-import { validateKnowledgeBaseId, validateKnowledgeSearch, validatePagination } from './validators'
+import {
+  addKnowledgeDirectory,
+  getKnowledgeBase,
+  getKnowledgeJob,
+  listKnowledgeBases,
+  refreshKnowledgeDirectory,
+  refreshKnowledgeDirectoryFile,
+  searchKnowledge
+} from './handlers'
+import {
+  validateKnowledgeBaseId,
+  validateKnowledgeDirectoryFileRefresh,
+  validateKnowledgeDirectoryPath,
+  validateKnowledgeDirectoryRefresh,
+  validateKnowledgeJob,
+  validateKnowledgeSearch,
+  validatePagination
+} from './validators'
 
 // Create main knowledge router
 const knowledgeRouter = express.Router()
@@ -156,6 +172,75 @@ const knowledgeRouter = express.Router()
  *           items:
  *             type: string
  *           description: Warning messages for partial search failures
+ *
+ *     KnowledgeJob:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Unique job identifier
+ *         operation:
+ *           type: string
+ *           enum: [add_directory, refresh_directory, refresh_directory_file]
+ *         knowledge_base_id:
+ *           type: string
+ *         item_id:
+ *           type: string
+ *         directory_item_id:
+ *           type: string
+ *         file_path:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [queued, running, completed, failed, cancelled]
+ *         progress:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 100
+ *         created_at:
+ *           type: number
+ *         updated_at:
+ *           type: number
+ *         error:
+ *           type: string
+ *           nullable: true
+ *
+ *     AddKnowledgeDirectoryRequest:
+ *       type: object
+ *       required:
+ *         - path
+ *       properties:
+ *         path:
+ *           type: string
+ *           description: Absolute directory path to add
+ *         mode:
+ *           type: string
+ *           enum: [enqueue, sync]
+ *           default: enqueue
+ *         refresh_if_exists:
+ *           type: boolean
+ *           default: false
+ *
+ *     RefreshKnowledgeDirectoryRequest:
+ *       type: object
+ *       properties:
+ *         mode:
+ *           type: string
+ *           enum: [full, incremental]
+ *           default: full
+ *
+ *     RefreshKnowledgeDirectoryFileRequest:
+ *       type: object
+ *       required:
+ *         - path
+ *       properties:
+ *         path:
+ *           type: string
+ *           description: Absolute file path inside the directory item
+ *         fallback:
+ *           type: string
+ *           enum: [error, full-directory]
+ *           default: error
  */
 
 /**
@@ -208,6 +293,156 @@ const knowledgeRouter = express.Router()
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 knowledgeRouter.get('/', validatePagination, listKnowledgeBases)
+
+/**
+ * @swagger
+ * /v1/knowledge-bases/jobs/{jobId}:
+ *   get:
+ *     summary: Get knowledge maintenance job status
+ *     tags: [Knowledge]
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Knowledge maintenance job
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/KnowledgeJob'
+ *       404:
+ *         description: Job not found
+ */
+knowledgeRouter.get('/jobs/:jobId', validateKnowledgeJob, getKnowledgeJob)
+
+/**
+ * @swagger
+ * /v1/knowledge-bases/{id}/directories:
+ *   post:
+ *     summary: Add a directory to a knowledge base
+ *     description: Adds a directory item and starts indexing it as a background job.
+ *     tags: [Knowledge]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Knowledge base ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AddKnowledgeDirectoryRequest'
+ *     responses:
+ *       202:
+ *         description: Directory indexing job queued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/KnowledgeJob'
+ *       400:
+ *         description: Invalid path or request
+ *       404:
+ *         description: Knowledge base not found
+ *       409:
+ *         description: Directory already exists or is already processing
+ *       503:
+ *         description: Service unavailable
+ */
+knowledgeRouter.post('/:id/directories', validateKnowledgeDirectoryPath, addKnowledgeDirectory)
+
+/**
+ * @swagger
+ * /v1/knowledge-bases/{id}/directories/{itemId}/refresh:
+ *   post:
+ *     summary: Refresh a directory knowledge item
+ *     description: Fully refreshes a directory item by deleting its existing loaders and re-indexing the directory.
+ *     tags: [Knowledge]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: itemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshKnowledgeDirectoryRequest'
+ *     responses:
+ *       202:
+ *         description: Directory refresh job queued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/KnowledgeJob'
+ *       400:
+ *         description: Invalid request or non-directory item
+ *       404:
+ *         description: Knowledge base or item not found
+ *       409:
+ *         description: Item is already processing
+ *       503:
+ *         description: Service unavailable
+ */
+knowledgeRouter.post('/:id/directories/:itemId/refresh', validateKnowledgeDirectoryRefresh, refreshKnowledgeDirectory)
+
+/**
+ * @swagger
+ * /v1/knowledge-bases/{id}/directories/{itemId}/files/refresh:
+ *   post:
+ *     summary: Refresh one file inside a directory knowledge item
+ *     description: Refreshes a single indexed file using the directory sidecar index. Use fallback=full-directory when no file-level index exists yet.
+ *     tags: [Knowledge]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: itemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshKnowledgeDirectoryFileRequest'
+ *     responses:
+ *       202:
+ *         description: File refresh job queued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/KnowledgeJob'
+ *       400:
+ *         description: Invalid file path or non-directory item
+ *       404:
+ *         description: Knowledge base or item not found
+ *       409:
+ *         description: Missing file index or item is already processing
+ *       503:
+ *         description: Service unavailable
+ */
+knowledgeRouter.post(
+  '/:id/directories/:itemId/files/refresh',
+  validateKnowledgeDirectoryFileRefresh,
+  refreshKnowledgeDirectoryFile
+)
 
 /**
  * @swagger

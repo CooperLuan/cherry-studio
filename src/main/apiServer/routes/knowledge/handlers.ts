@@ -4,26 +4,62 @@
 //           See: src/main/services/agents/database/schema/index.ts
 
 import { loggerService } from '@logger'
+import {
+  getKnowledgeBaseParams,
+  getKnowledgeBasesFromRedux,
+  isReduxUnavailableError
+} from '@main/services/KnowledgeBaseParamsResolver'
+import KnowledgeMaintenanceService, { KnowledgeMaintenanceError } from '@main/services/KnowledgeMaintenanceService'
 import KnowledgeService from '@main/services/KnowledgeService'
-import { reduxService } from '@main/services/ReduxService'
-import type { KnowledgeBase, KnowledgeBaseParams, Provider } from '@types'
+import type { KnowledgeBase } from '@types'
 import type { Response } from 'express'
 import type * as z from 'zod'
 
 import type { ValidationRequest } from '../agents/validators/zodValidator'
-import type { KnowledgeSearchSchema } from './validators/zodSchemas'
+import type {
+  KnowledgeDirectoryFileRefreshSchema,
+  KnowledgeDirectoryPathSchema,
+  KnowledgeDirectoryRefreshSchema,
+  KnowledgeSearchSchema
+} from './validators/zodSchemas'
 
 const logger = loggerService.withContext('KnowledgeHandlers')
 
 // Infer types from Zod schemas to avoid duplication
 type ValidatedSearchBody = z.infer<typeof KnowledgeSearchSchema>
+type ValidatedDirectoryPathBody = z.infer<typeof KnowledgeDirectoryPathSchema>
+type ValidatedDirectoryRefreshBody = z.infer<typeof KnowledgeDirectoryRefreshSchema>
+type ValidatedDirectoryFileRefreshBody = z.infer<typeof KnowledgeDirectoryFileRefreshSchema>
 
-/**
- * Helper to detect Redux unavailability errors
- */
-function isReduxUnavailableError(error: unknown): boolean {
-  const message = (error as Error)?.message || ''
-  return message.includes('Main window is not available') || message.includes('Timeout waiting for Redux store')
+function handleKnowledgeMaintenanceError(error: unknown, res: Response, fallbackCode: string): Response {
+  if (error instanceof KnowledgeMaintenanceError) {
+    return res.status(error.statusCode).json({
+      error: {
+        message: error.message,
+        type: error.type,
+        code: error.code
+      }
+    })
+  }
+
+  if (isReduxUnavailableError(error)) {
+    return res.status(503).json({
+      error: {
+        message: 'Knowledge bases are only available when Cherry Studio window is open',
+        type: 'service_unavailable',
+        code: 'REDUX_UNAVAILABLE'
+      }
+    })
+  }
+
+  logger.error('Knowledge maintenance request failed', error as Error)
+  return res.status(500).json({
+    error: {
+      message: 'Knowledge maintenance request failed',
+      type: 'internal_error',
+      code: fallbackCode
+    }
+  })
 }
 
 /**
@@ -41,7 +77,7 @@ export const listKnowledgeBases = async (req: ValidationRequest, res: Response):
     //           Redux access requires Cherry Studio window to be open.
     let bases: KnowledgeBase[]
     try {
-      bases = await reduxService.select<KnowledgeBase[]>('state.knowledge.bases')
+      bases = await getKnowledgeBasesFromRedux()
     } catch (error) {
       if (isReduxUnavailableError(error)) {
         logger.warn('Redux store not available, returning 503')
@@ -85,7 +121,7 @@ export const getKnowledgeBase = async (req: ValidationRequest, res: Response): P
     logger.debug(`Getting knowledge base: ${id}`)
 
     // TODO(v2): Migrate to V2 knowledge base storage (SQLite/Drizzle).
-    const bases = await reduxService.select<KnowledgeBase[]>('state.knowledge.bases')
+    const bases = await getKnowledgeBasesFromRedux()
     const base = bases?.find((b) => b.id === id)
 
     if (!base) {
@@ -121,88 +157,6 @@ export const getKnowledgeBase = async (req: ValidationRequest, res: Response): P
 }
 
 /**
- * Get provider configuration from Redux store by provider ID
- *
- * TODO(v2): Migrate to V2 provider config storage (SQLite/Drizzle) so the API server
- *           can resolve embedding/rerank provider credentials without a running renderer.
- *
- * NOTE: Redux errors are allowed to propagate - they will be caught by the handler's
- *       try/catch and converted to 503 responses via isReduxUnavailableError().
- */
-async function getProviderConfig(providerId: string): Promise<{ apiKey: string; baseURL: string } | null> {
-  const providers = await reduxService.select<Provider[]>('state.llm.providers')
-  const provider = providers?.find((p) => p.id === providerId)
-  if (!provider) {
-    logger.warn(`Provider not found: ${providerId}`)
-    return null
-  }
-
-  // Derive baseURL from apiHost, removing trailing slashes and # suffix
-  let baseURL = provider.apiHost || ''
-  baseURL = baseURL.replace(/\/+$/, '')
-  baseURL = baseURL.replace(/#$/, '')
-
-  // If multiple API keys are configured (comma-separated), use the first one.
-  // Matches the main-process convention in OpenClawService.
-  const apiKey = provider.apiKey ? provider.apiKey.split(',')[0].trim() : ''
-
-  return {
-    apiKey,
-    baseURL
-  }
-}
-
-/**
- * Convert KnowledgeBase to KnowledgeBaseParams for search
- */
-async function getKnowledgeBaseParams(base: KnowledgeBase): Promise<KnowledgeBaseParams> {
-  // Validate that embedding model provider is configured
-  const embedProviderId = base.model?.provider
-  if (!embedProviderId) {
-    throw new Error(`Knowledge base "${base.name}" is missing embedding model provider configuration`)
-  }
-
-  const embedConfig = await getProviderConfig(embedProviderId)
-  if (!embedConfig) {
-    throw new Error(`Provider "${embedProviderId}" not found for knowledge base "${base.name}"`)
-  }
-
-  const embedApiClient = {
-    model: base.model?.id || '',
-    provider: embedProviderId,
-    apiKey: embedConfig.apiKey,
-    baseURL: embedConfig.baseURL
-  }
-
-  // Build the params object
-  const params: KnowledgeBaseParams = {
-    id: base.id,
-    dimensions: base.dimensions,
-    embedApiClient,
-    chunkSize: base.chunkSize,
-    chunkOverlap: base.chunkOverlap,
-    documentCount: base.documentCount
-  }
-
-  // Add rerank if configured
-  if (base.rerankModel?.provider) {
-    const rerankConfig = await getProviderConfig(base.rerankModel.provider)
-    if (!rerankConfig) {
-      logger.warn(`Rerank provider not found for knowledge base "${base.name}": ${base.rerankModel.provider}`)
-    } else {
-      params.rerankApiClient = {
-        model: base.rerankModel.id || '',
-        provider: base.rerankModel.provider,
-        apiKey: rerankConfig.apiKey,
-        baseURL: rerankConfig.baseURL
-      }
-    }
-  }
-
-  return params
-}
-
-/**
  * Search across knowledge bases
  *
  * This endpoint allows you to search through one or more knowledge bases
@@ -217,7 +171,7 @@ export const searchKnowledge = async (req: ValidationRequest, res: Response): Pr
 
     // Get knowledge bases from Redux
     // TODO(v2): Migrate to V2 knowledge base storage (SQLite/Drizzle).
-    const bases = await reduxService.select<KnowledgeBase[]>('state.knowledge.bases')
+    const bases = await getKnowledgeBasesFromRedux()
 
     if (!bases || bases.length === 0) {
       return res.json({
@@ -327,4 +281,62 @@ export const searchKnowledge = async (req: ValidationRequest, res: Response): Pr
       }
     })
   }
+}
+
+export const addKnowledgeDirectory = async (req: ValidationRequest, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.validatedParams ?? {}
+    const {
+      path,
+      mode = 'enqueue',
+      refresh_if_exists = false
+    } = (req.validatedBody ?? {}) as ValidatedDirectoryPathBody
+
+    const job = await KnowledgeMaintenanceService.addDirectory(id, path, { mode, refresh_if_exists })
+    const responseJob = mode === 'sync' ? await KnowledgeMaintenanceService.waitForJob(job.id) : job
+
+    return res.status(mode === 'sync' ? 200 : 202).json(responseJob)
+  } catch (error) {
+    return handleKnowledgeMaintenanceError(error, res, 'ADD_KB_DIRECTORY_ERROR')
+  }
+}
+
+export const refreshKnowledgeDirectory = async (req: ValidationRequest, res: Response): Promise<Response> => {
+  try {
+    const { id, itemId } = req.validatedParams ?? {}
+    const { mode = 'full' } = (req.validatedBody ?? {}) as ValidatedDirectoryRefreshBody
+
+    const job = await KnowledgeMaintenanceService.refreshDirectory(id, itemId, { mode })
+    return res.status(202).json(job)
+  } catch (error) {
+    return handleKnowledgeMaintenanceError(error, res, 'REFRESH_KB_DIRECTORY_ERROR')
+  }
+}
+
+export const refreshKnowledgeDirectoryFile = async (req: ValidationRequest, res: Response): Promise<Response> => {
+  try {
+    const { id, itemId } = req.validatedParams ?? {}
+    const { path, fallback = 'error' } = (req.validatedBody ?? {}) as ValidatedDirectoryFileRefreshBody
+
+    const job = await KnowledgeMaintenanceService.refreshDirectoryFile(id, itemId, path, { fallback })
+    return res.status(202).json(job)
+  } catch (error) {
+    return handleKnowledgeMaintenanceError(error, res, 'REFRESH_KB_DIRECTORY_FILE_ERROR')
+  }
+}
+
+export const getKnowledgeJob = async (req: ValidationRequest, res: Response): Promise<Response> => {
+  const { jobId } = req.validatedParams ?? {}
+  const job = KnowledgeMaintenanceService.getJob(jobId)
+  if (!job) {
+    return res.status(404).json({
+      error: {
+        message: `Knowledge job not found: ${jobId}`,
+        type: 'invalid_request_error',
+        code: 'KNOWLEDGE_JOB_NOT_FOUND'
+      }
+    })
+  }
+
+  return res.json(job)
 }

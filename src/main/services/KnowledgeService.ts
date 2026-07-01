@@ -60,6 +60,10 @@ interface EvaluateTaskWorkload {
 
 type LoaderDoneReturn = LoaderReturn | null
 
+type DirectoryLoaderReturn = LoaderReturn & {
+  fileUniqueIds: Record<string, string>
+}
+
 enum LoaderTaskItemState {
   PENDING,
   PROCESSING,
@@ -368,11 +372,12 @@ class KnowledgeService {
       })
     }
 
-    const loaderDoneReturn: LoaderDoneReturn = {
+    const loaderDoneReturn: DirectoryLoaderReturn = {
       entriesAdded: 0,
       uniqueId: `DirectoryLoader_${uuidv4()}`,
       uniqueIds: [],
-      loaderType: 'DirectoryLoader'
+      loaderType: 'DirectoryLoader',
+      fileUniqueIds: {}
     }
     const loaderTasks: LoaderTaskItem[] = []
     for (const file of files) {
@@ -384,7 +389,10 @@ class KnowledgeService {
               loaderDoneReturn.entriesAdded += 1
               processedFiles += 1
               sendDirectoryProcessingPercent(totalFiles, processedFiles)
-              loaderDoneReturn.uniqueIds.push(result.uniqueId)
+              if (result.uniqueId) {
+                loaderDoneReturn.uniqueIds.push(result.uniqueId)
+                loaderDoneReturn.fileUniqueIds[file.path] = result.uniqueId
+              }
               return result
             })
             .catch((err) => {
