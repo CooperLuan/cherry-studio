@@ -1,5 +1,7 @@
 # Cherry Studio Knowledge Automation Fork
 
+Languages: English | [简体中文](docs/zh/README.md)
+
 This repository is a Cherry Studio fork focused on making large local knowledge bases practical to maintain over time.
 
 The main improvements in this branch are:
