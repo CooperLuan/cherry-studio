@@ -45,6 +45,8 @@ export interface KnowledgeBaseAddItemOptions {
   item: KnowledgeItem
   forceReload?: boolean
   userId?: string
+  onDirectoryFileStart?: (progress: DirectoryFileProgress) => void
+  onDirectoryFileComplete?: (progress: DirectoryFileProgress) => void
 }
 
 interface KnowledgeBaseAddItemOptionsNonNullableAttribute {
@@ -52,6 +54,14 @@ interface KnowledgeBaseAddItemOptionsNonNullableAttribute {
   item: KnowledgeItem
   forceReload: boolean
   userId: string
+  onDirectoryFileStart?: (progress: DirectoryFileProgress) => void
+  onDirectoryFileComplete?: (progress: DirectoryFileProgress) => void
+}
+
+export interface DirectoryFileProgress {
+  filePath: string
+  totalFiles: number
+  processedFiles: number
 }
 
 interface EvaluateTaskWorkload {
@@ -358,7 +368,7 @@ class KnowledgeService {
     ragApplication: RAGApplication,
     options: KnowledgeBaseAddItemOptionsNonNullableAttribute
   ): LoaderTask {
-    const { base, item, forceReload } = options
+    const { base, item, forceReload, onDirectoryFileComplete, onDirectoryFileStart } = options
     const directory = item.content as string
     const files = getAllFiles(directory)
     const totalFiles = files.length
@@ -383,26 +393,38 @@ class KnowledgeService {
     for (const file of files) {
       loaderTasks.push({
         state: LoaderTaskItemState.PENDING,
-        task: () =>
-          addFileLoader(ragApplication, file, base, forceReload)
-            .then((result) => {
-              loaderDoneReturn.entriesAdded += 1
-              processedFiles += 1
-              sendDirectoryProcessingPercent(totalFiles, processedFiles)
-              if (result.uniqueId) {
-                loaderDoneReturn.uniqueIds.push(result.uniqueId)
-                loaderDoneReturn.fileUniqueIds[file.path] = result.uniqueId
-              }
-              return result
+        task: async () => {
+          onDirectoryFileStart?.({
+            filePath: file.path,
+            totalFiles,
+            processedFiles
+          })
+
+          try {
+            const result = await addFileLoader(ragApplication, file, base, forceReload)
+            loaderDoneReturn.entriesAdded += 1
+            if (result.uniqueId) {
+              loaderDoneReturn.uniqueIds.push(result.uniqueId)
+              loaderDoneReturn.fileUniqueIds[file.path] = result.uniqueId
+            }
+            return result
+          } catch (err) {
+            logger.error('Failed to add dir loader:', err as Error)
+            return {
+              ...KnowledgeService.ERROR_LOADER_RETURN,
+              message: `Failed to add dir loader: ${(err as Error).message}`,
+              messageSource: 'embedding'
+            }
+          } finally {
+            processedFiles += 1
+            sendDirectoryProcessingPercent(totalFiles, processedFiles)
+            onDirectoryFileComplete?.({
+              filePath: file.path,
+              totalFiles,
+              processedFiles
             })
-            .catch((err) => {
-              logger.error('Failed to add dir loader:', err)
-              return {
-                ...KnowledgeService.ERROR_LOADER_RETURN,
-                message: `Failed to add dir loader: ${err.message}`,
-                messageSource: 'embedding'
-              }
-            }),
+          }
+        },
         evaluateTaskWorkload: { workload: file.size }
       })
     }

@@ -40,6 +40,7 @@ describe('KnowledgeDirectoryIndexService', () => {
                 size: 10,
                 mtimeMs: 100,
                 ext: '.md',
+                contentHash: 'hash-a',
                 lastIndexedAt: 200
               }
             }
@@ -53,6 +54,7 @@ describe('KnowledgeDirectoryIndexService', () => {
       size: 10,
       mtimeMs: 100,
       ext: '.md',
+      contentHash: 'hash-a',
       lastIndexedAt: 200
     })
   })
@@ -68,6 +70,7 @@ describe('KnowledgeDirectoryIndexService', () => {
         size: 10,
         mtimeMs: 100,
         ext: '.md',
+        contentHash: 'hash-a',
         lastIndexedAt: 200
       }
     })
@@ -77,6 +80,56 @@ describe('KnowledgeDirectoryIndexService', () => {
       expect.stringContaining('"loader-1"'),
       expect.objectContaining({ atomic: true, encoding: 'utf-8' })
     )
+  })
+
+  it('should upsert multiple files and remove stale path variants in one write', async () => {
+    ;(fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true)
+    ;(fs.promises.readFile as ReturnType<typeof vi.fn>).mockResolvedValue(
+      JSON.stringify({
+        'kb-1': {
+          'item-1': {
+            root: '/docs',
+            files: {
+              '/docs/old-case.md': {
+                uniqueId: 'loader-old',
+                size: 10,
+                mtimeMs: 100,
+                ext: '.md',
+                lastIndexedAt: 200
+              }
+            }
+          }
+        }
+      })
+    )
+    ;(fs.promises.mkdir as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
+    ;(writeWithLock as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
+
+    await service.upsertFiles(
+      'kb-1',
+      'item-1',
+      '/docs',
+      [
+        {
+          filePath: '/docs/new-case.md',
+          record: {
+            uniqueId: 'loader-old',
+            size: 10,
+            mtimeMs: 300,
+            ext: '.md',
+            contentHash: 'hash-new',
+            lastIndexedAt: 200
+          }
+        }
+      ],
+      ['/docs/old-case.md']
+    )
+
+    expect(writeWithLock).toHaveBeenCalledTimes(1)
+    const writtenPayload = (writeWithLock as ReturnType<typeof vi.fn>).mock.calls[0][1] as string
+    expect(writtenPayload).toContain('new-case.md')
+    expect(writtenPayload).toContain('"hash-new"')
+    expect(writtenPayload).not.toContain('"old-case.md"')
   })
 
   it('should remove a directory entry', async () => {

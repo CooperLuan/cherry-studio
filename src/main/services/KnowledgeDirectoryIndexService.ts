@@ -12,6 +12,7 @@ export interface KnowledgeDirectoryFileRecord {
   size: number
   mtimeMs: number
   ext: string
+  contentHash?: string
   lastIndexedAt: number
 }
 
@@ -92,6 +93,37 @@ export class KnowledgeDirectoryIndexService {
     await this.save(data)
   }
 
+  public async upsertFiles(
+    baseId: string,
+    itemId: string,
+    root: string,
+    records: Array<{ filePath: string; record: KnowledgeDirectoryFileRecord }>,
+    removeFilePaths: string[] = []
+  ): Promise<void> {
+    if (records.length === 0 && removeFilePaths.length === 0) {
+      return
+    }
+
+    const data = await this.load()
+    data[baseId] ??= {}
+    data[baseId][itemId] ??= {
+      root: this.normalizePathKey(root),
+      files: {}
+    }
+
+    data[baseId][itemId].root = this.normalizePathKey(root)
+    for (const filePath of removeFilePaths) {
+      delete data[baseId][itemId].files[filePath]
+      delete data[baseId][itemId].files[this.normalizePathKey(filePath)]
+    }
+
+    for (const { filePath, record } of records) {
+      data[baseId][itemId].files[this.normalizePathKey(filePath)] = record
+    }
+
+    await this.save(data)
+  }
+
   public async removeFile(baseId: string, itemId: string, filePath: string): Promise<void> {
     const data = await this.load()
     const directory = data[baseId]?.[itemId]
@@ -99,6 +131,7 @@ export class KnowledgeDirectoryIndexService {
       return
     }
 
+    delete directory.files[filePath]
     delete directory.files[this.normalizePathKey(filePath)]
     await this.save(data)
   }

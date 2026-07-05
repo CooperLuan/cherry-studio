@@ -2,6 +2,7 @@
 
 - [001 TODO: 知识库目录脚本/API 增删与刷新方案](#001-todo-知识库目录脚本api-增删与刷新方案)
   - [实现状态](#实现状态)
+  - [使用方法](#使用方法)
   - [结论](#结论)
   - [当前实现梳理](#当前实现梳理)
     - [1. 已有公开 HTTP API](#1-已有公开-http-api)
@@ -58,6 +59,78 @@
 - Windows x64 portable：`dist/Cherry-Studio-1.9.11-x64-portable.exe`
 
 备注：当前 Windows 环境下全量 `corepack pnpm test` 仍有既有测试失败，集中在 Windows 路径分隔符、symlink 权限、CherryClaw prompt mock 路径适配；本次新增知识库相关测试已通过。
+
+## 使用方法
+
+前提：
+
+- Cherry Studio 主窗口需要打开；
+- 设置里需要开启 API Server；
+- 如果设置了 API Key，请在脚本里传 `--api-key`，或设置环境变量 `CHERRY_API_KEY`。
+
+列出知识库：
+
+```bash
+pnpm tsx scripts/cherry-knowledge.ts list \
+  --api http://127.0.0.1:23333 \
+  --api-key <your-api-key>
+```
+
+给知识库新增目录并等待完成：
+
+```bash
+pnpm tsx scripts/cherry-knowledge.ts add-directory \
+  --api http://127.0.0.1:23333 \
+  --api-key <your-api-key> \
+  --base <knowledge-base-id> \
+  --path "C:\path\to\docs" \
+  --wait
+```
+
+刷新整个目录 item：
+
+```bash
+pnpm tsx scripts/cherry-knowledge.ts refresh-directory \
+  --api http://127.0.0.1:23333 \
+  --api-key <your-api-key> \
+  --base <knowledge-base-id> \
+  --item <directory-item-id> \
+  --wait
+```
+
+刷新目录中的单个文件：
+
+```bash
+pnpm tsx scripts/cherry-knowledge.ts refresh-file \
+  --api http://127.0.0.1:23333 \
+  --api-key <your-api-key> \
+  --base <knowledge-base-id> \
+  --directory-item <directory-item-id> \
+  --file "C:\path\to\docs\one-file.md" \
+  --wait
+```
+
+如果已有目录还没有文件级 sidecar 索引，第一次单文件刷新会返回 `FILE_INDEX_NOT_FOUND`。这时先执行一次整目录刷新，或使用：
+
+```bash
+pnpm tsx scripts/cherry-knowledge.ts refresh-file \
+  --api http://127.0.0.1:23333 \
+  --api-key <your-api-key> \
+  --base <knowledge-base-id> \
+  --directory-item <directory-item-id> \
+  --file "C:\path\to\docs\one-file.md" \
+  --fallback full-directory \
+  --wait
+```
+
+直接调用 HTTP API 时，接口是：
+
+```http
+POST /v1/knowledge-bases/{id}/directories
+POST /v1/knowledge-bases/{id}/directories/{itemId}/refresh
+POST /v1/knowledge-bases/{id}/directories/{itemId}/files/refresh
+GET  /v1/knowledge-bases/jobs/{jobId}
+```
 
 ## 结论
 

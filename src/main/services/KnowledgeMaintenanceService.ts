@@ -13,7 +13,7 @@ import KnowledgeDirectoryIndexService, {
 } from '@main/services/KnowledgeDirectoryIndexService'
 import KnowledgeService from '@main/services/KnowledgeService'
 import { reduxService } from '@main/services/ReduxService'
-import { getFileType, isPathInside } from '@main/utils/file'
+import { getAllFiles, getFileType, isPathInside } from '@main/utils/file'
 import type { LoaderReturn } from '@shared/config/types'
 import { FILE_TYPE, type FileMetadata, type KnowledgeBase, type KnowledgeItem } from '@types'
 import { v4 as uuidv4 } from 'uuid'
@@ -47,6 +47,9 @@ export interface KnowledgeJob {
   item_id?: string
   directory_item_id?: string
   file_path?: string
+  current_file?: string | null
+  total_files?: number
+  processed_files?: number
   status: KnowledgeJobStatus
   progress: number
   created_at: number
@@ -56,6 +59,12 @@ export interface KnowledgeJob {
 
 interface DirectoryLoaderReturn extends LoaderReturn {
   fileUniqueIds?: Record<string, string>
+}
+
+interface FileIndexSidecarUpdate {
+  filePath: string
+  oldKey?: string
+  record: KnowledgeDirectoryFileRecord
 }
 
 export class KnowledgeMaintenanceError extends Error {
@@ -82,9 +91,7 @@ class KnowledgeMaintenanceService {
   ): Promise<KnowledgeJob> {
     const base = await this.getBaseOrThrow(baseId)
     const resolvedDirectoryPath = await this.assertDirectoryPath(directoryPath)
-    const existingItem = base.items.find(
-      (item) => item.type === 'directory' && this.areSamePath(item.content as string, resolvedDirectoryPath)
-    )
+    const existingItem = await this.findDirectoryItemByPath(base, resolvedDirectoryPath)
 
     if (existingItem) {
       if (options.refresh_if_exists) {
@@ -132,17 +139,10 @@ class KnowledgeMaintenanceService {
     itemId: string,
     options: RefreshDirectoryOptions = {}
   ): Promise<KnowledgeJob> {
-    if ((options.mode ?? 'full') !== 'full') {
-      throw new KnowledgeMaintenanceError(
-        400,
-        'UNSUPPORTED_REFRESH_MODE',
-        'Only full directory refresh is currently supported'
-      )
-    }
-
     const { base, item } = await this.getDirectoryItemOrThrow(baseId, itemId)
     await this.assertDirectoryPath(item.content as string)
     await this.dispatchProcessingStatus(baseId, itemId, 'pending', 0)
+    const mode = options.mode ?? 'full'
 
     return this.enqueueJob(
       {
@@ -152,7 +152,10 @@ class KnowledgeMaintenanceService {
         directory_item_id: itemId
       },
       this.getDirectoryTargetKey(baseId, itemId),
-      async (job) => this.runDirectoryRefreshJob(job, base, item)
+      async (job) =>
+        mode === 'incremental'
+          ? this.runDirectoryIncrementalRefreshJob(job, base, item)
+          : this.runDirectoryRefreshJob(job, base, item)
     )
   }
 
@@ -160,13 +163,15 @@ class KnowledgeMaintenanceService {
     baseId: string,
     itemId: string,
     filePath: string,
-    options: RefreshDirectoryFileOptions = {}
+    _options: RefreshDirectoryFileOptions = {}
   ): Promise<KnowledgeJob> {
+    void _options
+
     const { base, item } = await this.getDirectoryItemOrThrow(baseId, itemId)
     const directoryPath = await this.assertDirectoryPath(item.content as string)
     const resolvedFilePath = await this.assertFilePath(filePath)
 
-    if (!isPathInside(resolvedFilePath, directoryPath)) {
+    if (!(await this.isPathInsideDirectory(resolvedFilePath, directoryPath))) {
       throw new KnowledgeMaintenanceError(
         400,
         'FILE_OUTSIDE_DIRECTORY',
@@ -175,17 +180,6 @@ class KnowledgeMaintenanceService {
     }
 
     const existingRecord = await KnowledgeDirectoryIndexService.getFile(baseId, itemId, resolvedFilePath)
-    if (!existingRecord) {
-      if ((options.fallback ?? 'error') === 'full-directory') {
-        return this.refreshDirectory(baseId, itemId, { mode: 'full' })
-      }
-
-      throw new KnowledgeMaintenanceError(
-        409,
-        'FILE_INDEX_NOT_FOUND',
-        'No file-level index entry exists for this path. Run a full directory refresh first.'
-      )
-    }
 
     return this.enqueueJob(
       {
@@ -262,7 +256,7 @@ class KnowledgeMaintenanceService {
     try {
       this.updateJob(job, { status: 'running', progress: 5 })
       await runner(job)
-      this.updateJob(job, { status: 'completed', progress: 100, error: null })
+      this.updateJob(job, { status: 'completed', progress: 100, current_file: null, error: null })
     } catch (error) {
       logger.error(`Knowledge job failed: ${job.id}`, error as Error)
       this.updateJob(job, {
@@ -284,7 +278,7 @@ class KnowledgeMaintenanceService {
     forceReload: boolean
   ): Promise<void> {
     await this.dispatchProcessingStatus(base.id, item.id, 'processing', 5)
-    const result = await this.addDirectoryItem(base, item, forceReload)
+    const result = await this.addDirectoryItem(base, item, forceReload, job)
     await this.persistDirectoryResult(base.id, item, result)
     await this.dispatchProcessingStatus(base.id, item.id, 'completed', 100)
     this.updateJob(job, { progress: 100 })
@@ -296,10 +290,184 @@ class KnowledgeMaintenanceService {
     await KnowledgeDirectoryIndexService.removeDirectory(base.id, item.id)
     this.updateJob(job, { progress: 25 })
 
-    const result = await this.addDirectoryItem(base, item, true)
+    const result = await this.addDirectoryItem(base, item, true, job, 25)
     await this.persistDirectoryResult(base.id, item, result)
     await this.dispatchProcessingStatus(base.id, item.id, 'completed', 100)
     this.updateJob(job, { progress: 100 })
+  }
+
+  private async runDirectoryIncrementalRefreshJob(
+    job: KnowledgeJob,
+    base: KnowledgeBase,
+    item: KnowledgeItem
+  ): Promise<void> {
+    await this.dispatchProcessingStatus(base.id, item.id, 'processing', 5)
+
+    const directoryRecord = await KnowledgeDirectoryIndexService.getDirectory(base.id, item.id)
+    if (!directoryRecord) {
+      throw new KnowledgeMaintenanceError(
+        409,
+        'DIRECTORY_INDEX_NOT_FOUND',
+        'Directory incremental refresh requires a file index. Run a full directory refresh once first.'
+      )
+    }
+
+    const directoryPath = item.content as string
+    const files = getAllFiles(directoryPath)
+    const fileEntries = await Promise.all(
+      files.map(async (file) => ({
+        file,
+        comparablePath: this.normalizeComparablePath(file.path),
+        realComparablePath: await this.resolveRealComparablePath(file.path)
+      }))
+    )
+    const indexedFiles = directoryRecord.files || {}
+    const staleEntries: Array<[string, KnowledgeDirectoryFileRecord]> = []
+    const changedFiles: FileMetadata[] = []
+    const sidecarUpdates: FileIndexSidecarUpdate[] = []
+
+    for (const [indexedFilePath, record] of Object.entries(indexedFiles)) {
+      const indexedComparablePath = this.normalizeComparablePath(indexedFilePath)
+      const indexedRealComparablePath = await this.resolveRealComparablePath(indexedFilePath)
+      const existsOnDisk = fileEntries.some((entry) =>
+        this.areComparablePathVariantsSame(
+          entry.comparablePath,
+          entry.realComparablePath,
+          indexedComparablePath,
+          indexedRealComparablePath
+        )
+      )
+
+      if (!existsOnDisk) {
+        staleEntries.push([indexedFilePath, record])
+      }
+    }
+
+    for (const { file, comparablePath, realComparablePath } of fileEntries) {
+      const indexedEntry = await this.findIndexedFileEntry(indexedFiles, comparablePath, realComparablePath)
+      const record = indexedEntry?.record
+      if (!record) {
+        changedFiles.push(file)
+        continue
+      }
+
+      const stats = await fs.promises.stat(file.path)
+      const comparison = await this.compareFileWithIndexRecord(file.path, record, stats)
+      if (comparison.changed) {
+        changedFiles.push(file)
+      } else if (comparison.updatedRecord) {
+        sidecarUpdates.push({
+          filePath: file.path,
+          oldKey: indexedEntry.key === comparablePath ? undefined : indexedEntry.key,
+          record: comparison.updatedRecord
+        })
+      }
+    }
+
+    const totalFiles = changedFiles.length + staleEntries.length
+    let processedFiles = 0
+    this.updateJob(job, { total_files: totalFiles, processed_files: 0, current_file: null, progress: 10 })
+
+    if (totalFiles === 0) {
+      await this.persistFileIndexSidecarUpdates(base.id, item.id, directoryPath, sidecarUpdates)
+      await this.dispatchProcessingStatus(base.id, item.id, 'completed', 100)
+      return
+    }
+
+    const params = await getKnowledgeBaseParams(base)
+    const latestItem = await this.getDirectoryItem(base.id, item.id)
+    const uniqueIds = new Set(latestItem?.uniqueIds || item.uniqueIds || [])
+
+    for (const [filePath, record] of staleEntries) {
+      this.updateJob(job, {
+        current_file: filePath,
+        total_files: totalFiles,
+        processed_files: processedFiles,
+        progress: this.calculateFileProgress(processedFiles, totalFiles, 10, 95)
+      })
+
+      await KnowledgeService.remove({} as Electron.IpcMainInvokeEvent, {
+        uniqueId: record.uniqueId,
+        uniqueIds: [record.uniqueId],
+        base: params
+      })
+      await KnowledgeDirectoryIndexService.removeFile(base.id, item.id, filePath)
+      uniqueIds.delete(record.uniqueId)
+
+      processedFiles += 1
+      this.updateJob(job, {
+        current_file: filePath,
+        total_files: totalFiles,
+        processed_files: processedFiles,
+        progress: this.calculateFileProgress(processedFiles, totalFiles, 10, 95)
+      })
+    }
+
+    for (const file of changedFiles) {
+      const filePath = file.path
+      const fileKey = this.normalizeComparablePath(filePath)
+      const realFileKey = await this.resolveRealComparablePath(filePath)
+      const oldEntry = await this.findIndexedFileEntry(indexedFiles, fileKey, realFileKey)
+      const oldRecord = oldEntry?.record || null
+      this.updateJob(job, {
+        current_file: filePath,
+        total_files: totalFiles,
+        processed_files: processedFiles,
+        progress: this.calculateFileProgress(processedFiles, totalFiles, 10, 95)
+      })
+
+      if (oldRecord) {
+        await KnowledgeService.remove({} as Electron.IpcMainInvokeEvent, {
+          uniqueId: oldRecord.uniqueId,
+          uniqueIds: [oldRecord.uniqueId],
+          base: params
+        })
+        uniqueIds.delete(oldRecord.uniqueId)
+      }
+
+      const fileItem = await this.createFileItem(item.id, filePath)
+      const result = await KnowledgeService.add({} as Electron.IpcMainInvokeEvent, {
+        base: params,
+        item: fileItem,
+        forceReload: true
+      })
+
+      this.assertLoaderSucceeded(result, `Failed to refresh file: ${filePath}`)
+
+      const newUniqueIds = result.uniqueIds?.length ? result.uniqueIds : result.uniqueId ? [result.uniqueId] : []
+      const nextUniqueId = newUniqueIds[0]
+      if (!nextUniqueId) {
+        throw new Error(`File refresh did not return a loader uniqueId: ${filePath}`)
+      }
+
+      await KnowledgeDirectoryIndexService.upsertFile(
+        base.id,
+        item.id,
+        directoryPath,
+        filePath,
+        await this.createFileIndexRecord(filePath, nextUniqueId)
+      )
+      if (oldEntry && oldEntry.key !== fileKey) {
+        await KnowledgeDirectoryIndexService.removeFile(base.id, item.id, oldEntry.key)
+      }
+
+      for (const uniqueId of newUniqueIds) {
+        uniqueIds.add(uniqueId)
+      }
+
+      processedFiles += 1
+      this.updateJob(job, {
+        current_file: filePath,
+        total_files: totalFiles,
+        processed_files: processedFiles,
+        progress: this.calculateFileProgress(processedFiles, totalFiles, 10, 95)
+      })
+    }
+
+    await this.persistFileIndexSidecarUpdates(base.id, item.id, directoryPath, sidecarUpdates)
+    await this.dispatchUniqueIds(base.id, item.id, latestItem?.uniqueId || item.uniqueId || '', [...uniqueIds])
+    await this.dispatchProcessingStatus(base.id, item.id, 'completed', 100)
+    this.updateJob(job, { current_file: null, processed_files: processedFiles, progress: 100 })
   }
 
   private async runDirectoryFileRefreshJob(
@@ -307,17 +475,20 @@ class KnowledgeMaintenanceService {
     base: KnowledgeBase,
     directoryItem: KnowledgeItem,
     filePath: string,
-    oldRecord: KnowledgeDirectoryFileRecord
+    oldRecord: KnowledgeDirectoryFileRecord | null
   ): Promise<void> {
     await this.dispatchProcessingStatus(base.id, directoryItem.id, 'processing', 10)
+    this.updateJob(job, { current_file: filePath, total_files: 1, processed_files: 0, progress: 10 })
 
     const params = await getKnowledgeBaseParams(base)
-    await KnowledgeService.remove({} as Electron.IpcMainInvokeEvent, {
-      uniqueId: oldRecord.uniqueId,
-      uniqueIds: [oldRecord.uniqueId],
-      base: params
-    })
-    this.updateJob(job, { progress: 35 })
+    if (oldRecord) {
+      await KnowledgeService.remove({} as Electron.IpcMainInvokeEvent, {
+        uniqueId: oldRecord.uniqueId,
+        uniqueIds: [oldRecord.uniqueId],
+        base: params
+      })
+    }
+    this.updateJob(job, { progress: oldRecord ? 35 : 20 })
 
     const fileItem = await this.createFileItem(directoryItem.id, filePath)
     const result = await KnowledgeService.add({} as Electron.IpcMainInvokeEvent, {
@@ -344,7 +515,9 @@ class KnowledgeMaintenanceService {
 
     const latestItem = await this.getDirectoryItem(base.id, directoryItem.id)
     const uniqueIds = new Set(latestItem?.uniqueIds || directoryItem.uniqueIds || [])
-    uniqueIds.delete(oldRecord.uniqueId)
+    if (oldRecord) {
+      uniqueIds.delete(oldRecord.uniqueId)
+    }
     for (const uniqueId of newUniqueIds) {
       uniqueIds.add(uniqueId)
     }
@@ -353,19 +526,45 @@ class KnowledgeMaintenanceService {
       ...uniqueIds
     ])
     await this.dispatchProcessingStatus(base.id, directoryItem.id, 'completed', 100)
-    this.updateJob(job, { progress: 100 })
+    this.updateJob(job, { current_file: null, processed_files: 1, progress: 100 })
   }
 
   private async addDirectoryItem(
     base: KnowledgeBase,
     item: KnowledgeItem,
-    forceReload: boolean
+    forceReload: boolean,
+    job?: KnowledgeJob,
+    progressStart = 10
   ): Promise<LoaderReturn> {
     const params = await getKnowledgeBaseParams(base)
     const result = await KnowledgeService.add({} as Electron.IpcMainInvokeEvent, {
       base: params,
       item,
-      forceReload
+      forceReload,
+      onDirectoryFileStart: (progress) => {
+        if (!job) {
+          return
+        }
+
+        this.updateJob(job, {
+          current_file: progress.filePath,
+          total_files: progress.totalFiles,
+          processed_files: progress.processedFiles,
+          progress: this.calculateFileProgress(progress.processedFiles, progress.totalFiles, progressStart, 95)
+        })
+      },
+      onDirectoryFileComplete: (progress) => {
+        if (!job) {
+          return
+        }
+
+        this.updateJob(job, {
+          current_file: progress.filePath,
+          total_files: progress.totalFiles,
+          processed_files: progress.processedFiles,
+          progress: this.calculateFileProgress(progress.processedFiles, progress.totalFiles, progressStart, 95)
+        })
+      }
     })
 
     this.assertLoaderSucceeded(result, `Failed to index directory: ${item.content}`)
@@ -434,6 +633,59 @@ class KnowledgeMaintenanceService {
     }
   }
 
+  private async compareFileWithIndexRecord(
+    filePath: string,
+    record: KnowledgeDirectoryFileRecord,
+    stats: fs.Stats
+  ): Promise<{ changed: boolean; updatedRecord?: KnowledgeDirectoryFileRecord }> {
+    const ext = path.extname(filePath)
+    if (record.size !== stats.size || record.ext !== ext) {
+      return { changed: true }
+    }
+
+    if (Math.abs(record.mtimeMs - stats.mtimeMs) <= 1) {
+      return { changed: false }
+    }
+
+    const contentHash = await this.createFileContentHash(filePath)
+    if (record.contentHash && record.contentHash !== contentHash) {
+      return { changed: true }
+    }
+
+    // Older sidecar records did not include a content hash. For metadata-only mtime
+    // drift with identical size/ext, preserve the existing loader and backfill the
+    // current hash so future incremental refreshes can compare content exactly.
+    return {
+      changed: false,
+      updatedRecord: {
+        ...record,
+        size: stats.size,
+        mtimeMs: stats.mtimeMs,
+        ext,
+        contentHash
+      }
+    }
+  }
+
+  private async persistFileIndexSidecarUpdates(
+    baseId: string,
+    itemId: string,
+    directoryPath: string,
+    updates: FileIndexSidecarUpdate[]
+  ): Promise<void> {
+    if (updates.length === 0) {
+      return
+    }
+
+    await KnowledgeDirectoryIndexService.upsertFiles(
+      baseId,
+      itemId,
+      directoryPath,
+      updates.map(({ filePath, record }) => ({ filePath, record })),
+      updates.flatMap(({ oldKey }) => (oldKey ? [oldKey] : []))
+    )
+  }
+
   private async createFileIndexRecord(filePath: string, uniqueId: string): Promise<KnowledgeDirectoryFileRecord> {
     const stats = await fs.promises.stat(filePath)
     return {
@@ -441,8 +693,20 @@ class KnowledgeMaintenanceService {
       size: stats.size,
       mtimeMs: stats.mtimeMs,
       ext: path.extname(filePath),
+      contentHash: await this.createFileContentHash(filePath),
       lastIndexedAt: Date.now()
     }
+  }
+
+  private async createFileContentHash(filePath: string): Promise<string> {
+    const hash = createHash('sha256')
+    const stream = fs.createReadStream(filePath)
+
+    for await (const chunk of stream) {
+      hash.update(chunk)
+    }
+
+    return hash.digest('hex')
   }
 
   private assertLoaderSucceeded(result: LoaderReturn, fallbackMessage: string): void {
@@ -540,16 +804,104 @@ class KnowledgeMaintenanceService {
   }
 
   private async resolveExistingPath(targetPath: string): Promise<string> {
-    const resolvedPath = path.resolve(targetPath)
-    try {
-      return await fs.promises.realpath(resolvedPath)
-    } catch {
-      return resolvedPath
-    }
+    return path.resolve(targetPath)
   }
 
-  private areSamePath(left: string, right: string): boolean {
-    return this.normalizeComparablePath(left) === this.normalizeComparablePath(right)
+  private async findDirectoryItemByPath(
+    base: KnowledgeBase,
+    directoryPath: string
+  ): Promise<KnowledgeItem | undefined> {
+    const directMatch = base.items.find(
+      (item) =>
+        item.type === 'directory' &&
+        this.normalizeComparablePath(item.content as string) === this.normalizeComparablePath(directoryPath)
+    )
+    if (directMatch) {
+      return directMatch
+    }
+
+    for (const item of base.items) {
+      if (item.type === 'directory' && (await this.areSamePath(item.content as string, directoryPath))) {
+        return item
+      }
+    }
+
+    return undefined
+  }
+
+  private async findIndexedFileEntry(
+    indexedFiles: Record<string, KnowledgeDirectoryFileRecord>,
+    comparablePath: string,
+    realComparablePath: string
+  ): Promise<{ key: string; record: KnowledgeDirectoryFileRecord } | null> {
+    const directRecord = indexedFiles[comparablePath]
+    if (directRecord) {
+      return { key: comparablePath, record: directRecord }
+    }
+
+    for (const [indexedFilePath, record] of Object.entries(indexedFiles)) {
+      const indexedComparablePath = this.normalizeComparablePath(indexedFilePath)
+      const indexedRealComparablePath = await this.resolveRealComparablePath(indexedFilePath)
+      if (
+        this.areComparablePathVariantsSame(
+          comparablePath,
+          realComparablePath,
+          indexedComparablePath,
+          indexedRealComparablePath
+        )
+      ) {
+        return { key: indexedFilePath, record }
+      }
+    }
+
+    return null
+  }
+
+  private areComparablePathVariantsSame(
+    leftComparablePath: string,
+    leftRealComparablePath: string,
+    rightComparablePath: string,
+    rightRealComparablePath: string
+  ): boolean {
+    return (
+      leftComparablePath === rightComparablePath ||
+      leftComparablePath === rightRealComparablePath ||
+      leftRealComparablePath === rightComparablePath ||
+      leftRealComparablePath === rightRealComparablePath
+    )
+  }
+
+  private async isPathInsideDirectory(filePath: string, directoryPath: string): Promise<boolean> {
+    if (isPathInside(filePath, directoryPath)) {
+      return true
+    }
+
+    const [realFilePath, realDirectoryPath] = await Promise.all([
+      this.resolveRealComparablePath(filePath),
+      this.resolveRealComparablePath(directoryPath)
+    ])
+    return isPathInside(realFilePath, realDirectoryPath)
+  }
+
+  private async areSamePath(left: string, right: string): Promise<boolean> {
+    if (this.normalizeComparablePath(left) === this.normalizeComparablePath(right)) {
+      return true
+    }
+
+    const [leftRealPath, rightRealPath] = await Promise.all([
+      this.resolveRealComparablePath(left),
+      this.resolveRealComparablePath(right)
+    ])
+    return leftRealPath === rightRealPath
+  }
+
+  private async resolveRealComparablePath(targetPath: string): Promise<string> {
+    const resolvedPath = path.resolve(targetPath)
+    try {
+      return this.normalizeComparablePath(await fs.promises.realpath(resolvedPath))
+    } catch {
+      return this.normalizeComparablePath(resolvedPath)
+    }
   }
 
   private normalizeComparablePath(targetPath: string): string {
@@ -561,7 +913,20 @@ class KnowledgeMaintenanceService {
     return `${baseId}:${itemId}`
   }
 
-  private updateJob(job: KnowledgeJob, patch: Partial<Pick<KnowledgeJob, 'status' | 'progress' | 'error'>>): void {
+  private calculateFileProgress(processedFiles: number, totalFiles: number, start: number, end: number): number {
+    if (totalFiles <= 0) {
+      return end
+    }
+
+    return Math.min(end, Math.max(start, Math.round(start + (processedFiles / totalFiles) * (end - start))))
+  }
+
+  private updateJob(
+    job: KnowledgeJob,
+    patch: Partial<
+      Pick<KnowledgeJob, 'current_file' | 'error' | 'processed_files' | 'progress' | 'status' | 'total_files'>
+    >
+  ): void {
     Object.assign(job, patch, { updated_at: Date.now() })
   }
 

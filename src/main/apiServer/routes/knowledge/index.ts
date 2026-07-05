@@ -190,6 +190,16 @@ const knowledgeRouter = express.Router()
  *           type: string
  *         file_path:
  *           type: string
+ *         current_file:
+ *           type: string
+ *           nullable: true
+ *           description: File currently being embedded or removed by this job
+ *         total_files:
+ *           type: number
+ *           description: Total file operations planned for directory/file jobs
+ *         processed_files:
+ *           type: number
+ *           description: Completed file operations for directory/file jobs
  *         status:
  *           type: string
  *           enum: [queued, running, completed, failed, cancelled]
@@ -241,6 +251,7 @@ const knowledgeRouter = express.Router()
  *           type: string
  *           enum: [error, full-directory]
  *           default: error
+ *           description: Legacy compatibility option. Missing sidecar records are now indexed as new files.
  */
 
 /**
@@ -361,7 +372,7 @@ knowledgeRouter.post('/:id/directories', validateKnowledgeDirectoryPath, addKnow
  * /v1/knowledge-bases/{id}/directories/{itemId}/refresh:
  *   post:
  *     summary: Refresh a directory knowledge item
- *     description: Fully refreshes a directory item by deleting its existing loaders and re-indexing the directory.
+ *     description: Refreshes a directory item. Use mode=incremental to process only added, modified, or deleted files based on the directory sidecar index; use mode=full to rebuild the whole directory.
  *     tags: [Knowledge]
  *     parameters:
  *       - in: path
@@ -403,7 +414,7 @@ knowledgeRouter.post('/:id/directories/:itemId/refresh', validateKnowledgeDirect
  * /v1/knowledge-bases/{id}/directories/{itemId}/files/refresh:
  *   post:
  *     summary: Refresh one file inside a directory knowledge item
- *     description: Refreshes a single indexed file using the directory sidecar index. Use fallback=full-directory when no file-level index exists yet.
+ *     description: Refreshes an indexed file using the directory sidecar index, or indexes it as a new file when no sidecar record exists.
  *     tags: [Knowledge]
  *     parameters:
  *       - in: path
@@ -434,7 +445,7 @@ knowledgeRouter.post('/:id/directories/:itemId/refresh', validateKnowledgeDirect
  *       404:
  *         description: Knowledge base or item not found
  *       409:
- *         description: Missing file index or item is already processing
+ *         description: Item is already processing
  *       503:
  *         description: Service unavailable
  */
