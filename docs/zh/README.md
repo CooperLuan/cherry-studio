@@ -1,321 +1,314 @@
-<div align="right" >
-  <details>
-    <summary >🌐 Language</summary>
-    <div>
-      <div align="right">
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=en">English</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=zh-CN">简体中文</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=zh-TW">繁體中文</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=ja">日本語</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=ko">한국어</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=hi">हिन्दी</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=th">ไทย</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=fr">Français</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=de">Deutsch</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=es">Español</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=it">Italiano</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=ru">Русский</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=pt">Português</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=nl">Nederlands</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=pl">Polski</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=ar">العربية</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=fa">فارسی</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=tr">Türkçe</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=vi">Tiếng Việt</a></p>
-        <p><a href="https://openaitx.github.io/view.html?user=CherryHQ&project=cherry-studio&lang=id">Bahasa Indonesia</a></p>
-      </div>
-    </div>
-  </details>
-</div>
+# Cherry Studio 知识库自动化 Fork
 
-<h1 align="center">
-  <a href="https://github.com/CherryHQ/cherry-studio/releases">
-    <img src="https://github.com/CherryHQ/cherry-studio/blob/main/build/icon.png?raw=true" width="150" height="150" alt="banner" /><br>
-  </a>
-</h1>
-<p align="center">
-  <a href="https://github.com/CherryHQ/cherry-studio">English</a> | 中文 | <a href="https://cherry-ai.com">官方网站</a> | <a href="https://docs.cherry-ai.com">文档</a> | <a href="./guides/development.md">开发</a> | <a href="https://github.com/CherryHQ/cherry-studio/issues">反馈</a><br>
-</p>
+这个仓库是 Cherry Studio 的一个 fork，重点是让大型本地知识库可以长期、低成本地维护。
 
-<!-- 题头徽章组合 -->
+当前分支的主要改进：
 
-<div align="center">
+- 为 Cherry Studio 知识库增加目录级增量刷新
+- 新增知识库维护 API：添加目录、刷新目录、刷新单个文件、查询任务状态
+- 增加文件级 sidecar 索引与内容哈希，避免重复 embedding 未变化文件
+- 提供 CLI 工具，用于把本地文件夹批量同步到 Cherry Studio 知识库
+- 为长时间运行的目录索引任务提供更清晰的进度信息
+- 为新增维护接口补充 OpenAPI 文档
 
-[![][deepwiki-shield]][deepwiki-link]
-[![][twitter-shield]][twitter-link]
-[![][discord-shield]][discord-link]
-[![][telegram-shield]][telegram-link]
+本项目仍然基于上游 [Cherry Studio](https://github.com/CherryHQ/cherry-studio)：一个跨平台桌面 AI 客户端，支持多模型服务商、智能助手、文档处理、MCP 集成和知识库搜索。
 
-</div>
+## 知识库相关改动
 
-<div align="center">
+### 目录增量索引
 
-[![][github-release-shield]][github-release-link]
-[![][github-contributors-shield]][github-contributors-link]
-[![][license-shield]][license-link]
-[![][commercial-shield]][commercial-link]
-[![][sponsor-shield]][sponsor-link]
+Cherry Studio 现在可以为目录型知识库条目维护文件级 sidecar 索引。目录具备 sidecar 索引后，刷新任务会根据路径、大小、扩展名、mtime 和内容哈希判断文件是否变化。
 
-</div>
+因此一次刷新只会处理：
 
-<div align="center">
- <a href="https://hellogithub.com/repository/1605492e1e2a4df3be07abfa4578dd37" target="_blank" style="text-decoration: none"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=1605492e1e2a4df3be07abfa4578dd37" alt="Featured｜HelloGitHub"  width="220" height="55" /></a>
- <a href="https://trendshift.io/repositories/11772" target="_blank" style="text-decoration: none"><img src="https://trendshift.io/api/badge/repositories/11772" alt="kangfenmao%2Fcherry-studio | Trendshift" width="220" height="55" /></a>
- <a href="https://www.producthunt.com/posts/cherry-studio?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-cherry&#0045;studio" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=496640&theme=light" alt="Cherry&#0032;Studio - AI&#0032;Chatbots&#0044;&#0032;AI&#0032;Desktop&#0032;Client | Product Hunt" width="220" height="55" /></a>
-</div>
+- 新增文件
+- 修改过的文件
+- 已删除、需要移除 loader 的文件
 
-# 🍒 Cherry Studio
+未变化文件会保留原有 loader ID，不会再次 embedding。
 
-Cherry Studio 是一款支持多个大语言模型（LLM）服务商的桌面客户端，兼容 Windows、Mac 和 Linux 系统。
+### 知识库维护 API
 
-👏 欢迎加入 [Telegram 群组](https://t.me/CherryStudioAI)｜[Discord](https://discord.gg/wez8HtpxqQ) | [QQ群(575014769)](https://qm.qq.com/q/lo0D4qVZKi)
+本地 API Server 新增了写操作维护接口：
 
-❤️ 喜欢 Cherry Studio? 点亮小星星 🌟 或 [赞助开发者](./guides/sponsor.md)! ❤️
+```http
+POST /v1/knowledge-bases/{id}/directories
+POST /v1/knowledge-bases/{id}/directories/{itemId}/refresh
+POST /v1/knowledge-bases/{id}/directories/{itemId}/files/refresh
+GET  /v1/knowledge-bases/jobs/{jobId}
+```
 
-# 📖 使用教程
+这些接口主要面向本地自动化脚本、定时任务和个人知识摄取流水线。
 
-https://docs.cherry-ai.com
+### CLI 同步流程
 
-# 🌠 界面
+`scripts/cherry-knowledge.ts` CLI helper 支持：
 
-![](https://github.com/user-attachments/assets/36dddb2c-e0fb-4a5f-9411-91447bab6e18)
+- 列出知识库
+- 给知识库添加目录
+- 刷新整个目录
+- 刷新目录中的单个文件
+- 从 YAML/JSON 配置批量同步多个目录
+- 等待任务完成并打印进度
 
-![](https://github.com/user-attachments/assets/f549e8a0-2385-40b4-b52b-2039e39f2930)
+## 前置条件
 
-![](https://github.com/user-attachments/assets/58e0237c-4d36-40de-b428-53051d982026)
+1. 打开 Cherry Studio。
+2. 在 Cherry Studio 设置中启用本地 API Server。
+3. 如果 API Server 开启了鉴权，请准备好 API key。
+4. 安装仓库依赖：
 
-# 🌟 主要特性
+```bash
+corepack pnpm install
+```
 
-1. **多样化 LLM 服务支持**：
+默认本地 API 地址：
 
-- ☁️ 支持主流 LLM 云服务：OpenAI、Gemini、Anthropic、硅基流动等
-- 🔗 集成流行 AI Web 服务：Claude、Perplexity、Poe、腾讯元宝、知乎直答等
-- 💻 支持 Ollama、LM Studio 本地模型部署
+```text
+http://127.0.0.1:23333
+```
 
-2. **智能助手与对话**：
+可以用环境变量覆盖：
 
-- 📚 内置 300+ 预配置 AI 助手
-- 🤖 支持自定义创建专属助手
-- 💬 多模型同时对话，获得多样化观点
+```bash
+CHERRY_KB_API_BASE=http://127.0.0.1:23333
+```
 
-3. **文档与数据处理**：
+或：
 
-- 📄 支持文本、图片、Office、PDF 等多种格式
-- ☁️ WebDAV 文件管理与数据备份
-- 📊 Mermaid 图表可视化
-- 💻 代码高亮显示
+```bash
+CHERRY_API_BASE=http://127.0.0.1:23333
+```
 
-4. **实用工具集成**：
+## 鉴权
 
-- 🔍 全局搜索功能
-- 📝 话题管理系统
-- 🔤 AI 驱动的翻译功能
-- 🎯 拖拽排序
-- 🔌 小程序支持
-- ⚙️ MCP(模型上下文协议) 服务
+直接传 API key：
 
-5. **优质使用体验**：
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts list \
+  --api-key cs-sk-your-key
+```
 
-- 🖥️ Windows、Mac、Linux 跨平台支持
-- 📦 开箱即用，无需配置环境
-- 🎨 支持明暗主题与透明窗口
-- 📝 完整的 Markdown 渲染
-- 🤲 便捷的内容分享功能
+或把 key 存到文件里：
 
-# 📝 开发计划
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts list \
+  --api-key-file ~/.cherry-api-key
+```
 
-我们正在积极开发以下功能和改进：
+Windows 上也可以使用：
 
-1. 🎯 **核心功能**
+```powershell
+corepack pnpm exec tsx scripts/cherry-knowledge.ts list `
+  --api-key-file "$env:USERPROFILE\.cherry-api-key"
+```
 
-- 选择助手 - 智能内容选择增强
-- 深度研究 - 高级研究能力
-- 全局记忆 - 全局上下文感知
-- 文档预处理 - 改进文档处理能力
-- MCP 市场 - 模型上下文协议生态系统
+key 文件支持这些简单格式：
+
+```text
+cs-sk-your-key
+```
+
+```text
+Bearer cs-sk-your-key
+```
+
+```text
+CHERRY_API_KEY=cs-sk-your-key
+```
+
+## CLI 用法
+
+### 列出知识库
+
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts list \
+  --api http://127.0.0.1:23333 \
+  --api-key-file ~/.cherry-api-key
+```
+
+### 给知识库添加目录
+
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts add-directory \
+  --api http://127.0.0.1:23333 \
+  --api-key-file ~/.cherry-api-key \
+  --base <knowledge-base-id> \
+  --path "C:\path\to\docs" \
+  --wait
+```
+
+添加新目录时会执行索引，并创建后续增量刷新所需的 sidecar 文件索引。
+
+### 刷新已有目录
+
+全量刷新：
+
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts refresh-directory \
+  --api-key-file ~/.cherry-api-key \
+  --base <knowledge-base-id> \
+  --item <directory-item-id> \
+  --mode full \
+  --wait
+```
+
+增量刷新：
 
-2. 🗂 **知识管理**
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts refresh-directory \
+  --api-key-file ~/.cherry-api-key \
+  --base <knowledge-base-id> \
+  --item <directory-item-id> \
+  --mode incremental \
+  --wait
+```
+
+如果旧目录还没有 sidecar 索引，增量刷新会返回明确错误。先对该目录执行一次全量刷新建立基线，之后就可以使用增量刷新。
 
-- 笔记与收藏功能
-- 动态画布可视化
-- OCR 光学字符识别
-- TTS 文本转语音支持
+### 刷新目录中的单个文件
+
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts refresh-file \
+  --api-key-file ~/.cherry-api-key \
+  --base <knowledge-base-id> \
+  --directory-item <directory-item-id> \
+  --file "C:\path\to\docs\one-file.md" \
+  --wait
+```
+
+如果该文件已存在于 sidecar 索引中，会先移除旧 loader，再重新 embedding 该文件。如果它是新文件，则会作为新文件加入目录条目。
 
-3. 📱 **平台支持**
+### 查询任务状态
 
-- 鸿蒙版本 (PC)
-- Android 应用（第一期）
-- iOS 应用（第一期）
-- 多窗口支持
-- 窗口置顶功能
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts job \
+  --api-key-file ~/.cherry-api-key \
+  --job <job-id>
+```
 
-4. 🔌 **高级特性**
+## 从配置批量同步目录
 
-- 插件系统
-- ASR 语音识别
-- 助手与话题交互重构
+创建一个 YAML 文件，把知识库名称映射到本地目录：
 
-在我们的[项目面板](https://github.com/orgs/CherryHQ/projects/7)上跟踪进展并参与贡献。
+```yaml
+Research:
+  - 'C:\Knowledge\papers'
+  - 'C:\Knowledge\notes'
+Podcasts:
+  - 'D:\Transcripts\tech'
+  - 'D:\Transcripts\health'
+```
 
-想要影响开发计划？欢迎加入我们的 [GitHub 讨论区](https://github.com/CherryHQ/cherry-studio/discussions) 分享您的想法和反馈！
+然后运行：
 
-# 🌈 主题
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts sync-directories \
+  --api-key-file ~/.cherry-api-key \
+  --config kb-dirs.yaml \
+  --wait
+```
 
-- 主题库：https://cherrycss.com
-- Aero 主题：https://github.com/hakadao/CherryStudio-Aero
-- PaperMaterial 主题：https://github.com/rainoffallingstar/CherryStudio-PaperMaterial
-- 仿 Claude 主题：https://github.com/bjl101501/CherryStudio-Claudestyle-dynamic
-- 霓虹枫叶主题：https://github.com/BoningtonChen/CherryStudio_themes
+默认情况下，已有目录会跳过，只会添加尚未绑定的目录。
 
-欢迎 PR 更多主题
+如果也要刷新配置里的已有目录：
 
-# 🤝 贡献
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts sync-directories \
+  --api-key-file ~/.cherry-api-key \
+  --config kb-dirs.yaml \
+  --refresh-existing \
+  --wait
+```
 
-我们欢迎对 Cherry Studio 的贡献！您可以通过以下方式贡献：
+如果要对已有目录执行严格增量同步：
 
-1. **贡献代码**：开发新功能或优化现有代码
-2. **修复错误**：提交您发现的错误修复
-3. **维护问题**：帮助管理 GitHub 问题
-4. **产品设计**：参与设计讨论
-5. **撰写文档**：改进用户手册和指南
-6. **社区参与**：加入讨论并帮助用户
-7. **推广使用**：宣传 Cherry Studio
+```bash
+corepack pnpm exec tsx scripts/cherry-knowledge.ts sync-directories \
+  --api-key-file ~/.cherry-api-key \
+  --config kb-dirs.yaml \
+  --refresh-existing \
+  --mode incremental \
+  --wait
+```
 
-参考[分支策略](./guides/branching-strategy.md)了解贡献指南
+这个模式适合自动化任务：当旧目录缺少 sidecar 索引时，它不会静默 fallback 到全量重嵌入，而是直接失败并提示你先建立基线。
 
-## 入门
+## 推荐自动化流程
 
-1. **Fork 仓库**：Fork 并克隆到您的本地机器
-2. **创建分支**：为您的更改创建分支
-3. **提交更改**：提交并推送您的更改
-4. **打开 Pull Request**：描述您的更改和原因
+对于大型个人知识库，推荐这样跑：
 
-有关更详细的指南，请参阅我们的 [贡献指南](./guides/contributing.md)
+1. 先运行 `sync-directories --config kb-dirs.yaml --wait`，添加还没绑定过的目录。
+2. 再运行 `sync-directories --config kb-dirs.yaml --refresh-existing --mode incremental --wait`，处理已有目录中的新增、修改和删除文件。
+3. 如果某个旧目录因为没有 sidecar 索引而失败，对该目录执行一次全量刷新，之后继续使用增量模式。
 
-感谢您的支持和贡献！
+## API 示例
 
-# 🔧 开发者共创计划
+### 添加目录
 
-我们正在启动 Cherry Studio 开发者共创计划，旨在为开源生态系统构建一个健康、正向反馈的循环。我们相信，优秀的软件是通过协作构建的，每一个合并的拉取请求都为项目注入新的生命力。
+```bash
+curl -X POST "http://127.0.0.1:23333/v1/knowledge-bases/<base-id>/directories" \
+  -H "Authorization: Bearer cs-sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{"path":"C:\\path\\to\\docs","mode":"enqueue","refresh_if_exists":false}'
+```
 
-我们诚挚地邀请您加入我们的贡献者队伍，与我们一起塑造 Cherry Studio 的未来。
+### 增量刷新目录
 
-## 贡献者奖励计划
+```bash
+curl -X POST "http://127.0.0.1:23333/v1/knowledge-bases/<base-id>/directories/<item-id>/refresh" \
+  -H "Authorization: Bearer cs-sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"incremental"}'
+```
 
-为了回馈我们的核心贡献者并创造良性循环，我们建立了以下长期激励计划。
+### 刷新单个文件
 
-**该计划的首个跟踪周期将是 2025 年第三季度（7月、8月、9月）。此周期的奖励将在 10月1日 发放。**
+```bash
+curl -X POST "http://127.0.0.1:23333/v1/knowledge-bases/<base-id>/directories/<item-id>/files/refresh" \
+  -H "Authorization: Bearer cs-sk-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{"path":"C:\\path\\to\\docs\\one-file.md"}'
+```
 
-在任何跟踪周期内（例如，首个周期的 7月1日 至 9月30日），任何为 Cherry Studio 在 GitHub 上的开源项目贡献超过 **30 个有意义提交** 的开发者都有资格获得以下福利：
+### 查询任务状态
 
-- **Cursor 订阅赞助**：获得 **70 美元** 的 [Cursor](https://cursor.sh/) 订阅积分或报销，让 AI 成为您最高效的编码伙伴。
-- **无限模型访问**：获得 **DeepSeek** 和 **Qwen** 模型的 **无限次** API 调用。
-- **前沿技术访问**：享受偶尔的特殊福利，包括 **Claude**、**Gemini** 和 **OpenAI** 等模型的 API 访问权限，让您始终站在技术前沿。
+```bash
+curl "http://127.0.0.1:23333/v1/knowledge-bases/jobs/<job-id>" \
+  -H "Authorization: Bearer cs-sk-your-key"
+```
 
-## 共同成长与未来规划
+目录任务的响应里会包含 `progress`、`current_file`、`total_files`、`processed_files` 等进度字段。
 
-活跃的社区是任何可持续开源项目背后的推动力。随着 Cherry Studio 的发展，我们的奖励计划也将随之发展。我们致力于持续将我们的福利与行业内最优秀的工具和资源保持一致。这确保我们的核心贡献者获得有意义的支持，创造一个开发者、社区和项目共同成长的正向循环。
+## 开发
 
-**展望未来，该项目还将采取越来越开放的态度来回馈整个开源社区。**
+运行本功能相关的定向测试：
 
-## 如何开始？
+```bash
+corepack pnpm exec vitest run \
+  src/main/services/__tests__/KnowledgeDirectoryIndexService.test.ts \
+  src/main/services/__tests__/KnowledgeMaintenanceService.test.ts
+```
 
-我们期待您的第一个拉取请求！
+其他 Cherry Studio 常用开发命令仍然适用：
 
-您可以从探索我们的仓库开始，选择一个 `good first issue`，或者提出您自己的改进建议。每一个提交都是开源精神的体现。
+```bash
+corepack pnpm dev
+corepack pnpm lint
+corepack pnpm test
+corepack pnpm format
+```
 
-感谢您的关注和贡献。
+## 注意事项和限制
 
-让我们一起建设。
+- 增量刷新需要 sidecar 索引；旧目录可能需要先全量刷新一次。
+- 执行 CLI 的机器必须能访问正在运行的 API Server。
+- 写操作 API 使用 Cherry Studio API Server 设置里的同一个 API key。
+- 使用 `--config` 时，目录同步会按知识库名称匹配。
+- 包含私有路径或 API key 的本地配置文件不要提交到仓库。
 
-# 🏢 企业版
+## 上游与许可证
 
-在社区版的基础上，我们自豪地推出 **Cherry Studio 企业版**——一个为现代团队和企业设计的私有部署 AI 生产力与管理平台。
+本 fork 基于 [CherryHQ/cherry-studio](https://github.com/CherryHQ/cherry-studio)。
 
-企业版通过集中管理 AI 资源、知识和数据，解决了团队协作中的核心挑战。它赋能组织提升效率、促进创新并确保合规，同时在安全环境中保持对数据的 100% 控制。
-
-## 核心优势
-
-- **统一模型管理**：集中整合和管理各种基于云的大语言模型（如 OpenAI、Anthropic、Google Gemini）和本地部署的私有模型。员工可以开箱即用，无需单独配置。
-- **企业级知识库**：构建、管理和分享全团队的知识库。确保知识得到保留且一致，使团队成员能够基于统一准确的信息与 AI 交互。
-- **细粒度访问控制**：通过统一的管理后台轻松管理员工账户，并为不同模型、知识库和功能分配基于角色的权限。
-- **完全私有部署**：在您的本地服务器或私有云上部署整个后端服务，确保您的数据 100% 私有且在您的控制之下，满足最严格的安全和合规标准。
-- **可靠的后端服务**：提供稳定的 API 服务、企业级数据备份和恢复机制，确保业务连续性。
-
-## ✨ 在线演示
-
-> 🚧 **公开测试版通知**
->
-> 企业版目前处于早期公开测试阶段，我们正在积极迭代和优化其功能。我们知道它可能还不够完全稳定。如果您在试用过程中遇到任何问题或有宝贵建议，我们非常感谢您能通过邮件联系我们提供反馈。
-
-**🔗 [Cherry Studio 企业版](https://enterprise.cherry-ai.com)**
-
-## 版本对比
-
-| 功能         | 社区版                  | 企业版                                                                                         |
-| :----------- | :---------------------- | :--------------------------------------------------------------------------------------------- |
-| **开源**     | ✅ 是                   | ⭕️ 部分开源，对客户开放                                                                        |
-| **成本**     | 个人使用免费 / 商业授权 | 买断 / 订阅费用                                                                                |
-| **管理后台** | —                       | ● 集中化**模型**访问<br>● **员工**管理<br>● 共享**知识库**<br>● **访问**控制<br>● **数据**备份 |
-| **服务器**   | —                       | ✅ 专用私有部署                                                                                |
-
-## 获取企业版
-
-我们相信企业版将成为您团队的 AI 生产力引擎。如果您对 Cherry Studio 企业版感兴趣，希望了解更多信息、请求报价或安排演示，请联系我们。
-
-- **商业咨询与购买**：
-  **📧 [bd@cherry-ai.com](mailto:bd@cherry-ai.com)**
-
-# 🔗 相关项目
-
-- [one-api](https://github.com/songquanpeng/one-api)：LLM API 管理及分发系统，支持 OpenAI、Azure、Anthropic 等主流模型，统一 API 接口，可用于密钥管理与二次分发。
-
-- [ublacklist](https://github.com/iorate/ublacklist)：屏蔽特定网站在 Google 搜索结果中显示
-
-# 🚀 贡献者
-
-<a href="https://github.com/CherryHQ/cherry-studio/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=CherryHQ/cherry-studio" />
-</a>
-<br /><br />
-
-# 📊 GitHub 统计
-
-![Stats](https://repobeats.axiom.co/api/embed/a693f2e5f773eed620f70031e974552156c7f397.svg "Repobeats analytics image")
-
-# ⭐️ Star 记录
-
-<a href="https://www.star-history.com/#CherryHQ/cherry-studio&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=CherryHQ/cherry-studio&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=CherryHQ/cherry-studio&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=CherryHQ/cherry-studio&type=Date" />
- </picture>
-</a>
-
-<!-- Links & Images -->
-
-[deepwiki-shield]: https://img.shields.io/badge/Deepwiki-CherryHQ-0088CC
-[deepwiki-link]: https://deepwiki.com/CherryHQ/cherry-studio
-[twitter-shield]: https://img.shields.io/badge/Twitter-CherryStudioApp-0088CC?logo=x
-[twitter-link]: https://twitter.com/CherryStudioHQ
-[discord-shield]: https://img.shields.io/badge/Discord-@CherryStudio-0088CC?logo=discord
-[discord-link]: https://discord.gg/wez8HtpxqQ
-[telegram-shield]: https://img.shields.io/badge/Telegram-@CherryStudioAI-0088CC?logo=telegram
-[telegram-link]: https://t.me/CherryStudioAI
-
-<!-- 项目统计徽章 -->
-
-[github-release-shield]: https://img.shields.io/github/v/release/CherryHQ/cherry-studio
-[github-release-link]: https://github.com/CherryHQ/cherry-studio/releases
-[github-contributors-shield]: https://img.shields.io/github/contributors/CherryHQ/cherry-studio
-[github-contributors-link]: https://github.com/CherryHQ/cherry-studio/graphs/contributors
-
-<!-- 许可和赞助徽章 -->
-
-[license-shield]: https://img.shields.io/badge/License-AGPLv3-important.svg?logo=gnu
-[license-link]: https://www.gnu.org/licenses/agpl-3.0
-[commercial-shield]: https://img.shields.io/badge/商用授权-联系-white.svg?logoColor=white&logo=telegram&color=blue
-[commercial-link]: mailto:license@cherry-ai.com?subject=商业授权咨询
-[sponsor-shield]: https://img.shields.io/badge/赞助支持-FF6699.svg?logo=githubsponsors&logoColor=white
-[sponsor-link]: https://github.com/CherryHQ/cherry-studio/blob/main/docs/sponsor.md
+Cherry Studio Community Edition 使用 AGPL-3.0 许可证。详见 [LICENSE](../../LICENSE)。
